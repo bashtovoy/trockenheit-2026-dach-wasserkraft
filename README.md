@@ -73,36 +73,49 @@ Wichtigste Befunde:
   Wetterprüfung ist als physikalische Kette aufgebaut. Kernstück ist die **Sommerwasserbilanz
   D = Niederschlag − ET₀** (ET₀ = FAO-56-Referenzverdunstung); Temperatur und Strahlung gehen damit als
   *verdunstungswirksame Nachfrage* ein, statt als separate Grob-Proxies. Über die zehn Sommer (n = 10)
-  ist D der stärkste Einzeltreiber der natürlichen Wasserkraft: **DE r = +0,78 (p = 0,008),
-  AT r = +0,72 / Spearman ρ = +0,76 (p = 0,011)**. Die **Schweiz** bleibt im selben Sommer schwach
-  gepuffert (D r = +0,24, p > 0,05), doch der **Frühlingsniederschlag** (Mär–Mai) als Vorlaufsignal
-  erreicht **r = +0,70 (p = 0,024)** – konsistent mit der alpinen Speicher-/Schneepufferung.
-  Monatsanomalien der Wasserbilanz (n = 30) bestätigen das DE/AT-Muster (DE ρ = +0,62, p < 0,001).
-  Der gegen die **Klimanormal 1991–2020** standardisierte D ist als **SPEI-3-Proxy** ausgewiesen
-  (transparente standardisierte Wasserbilanz, kein vollständig log-logistic-fittes SPEI). Es bleibt eine
-  **explorative Korrelation, kein Kausalnachweis**, bei kleinem Stichprobenumfang.
+  zeigt D die **stärkste beobachtete bikivariate Kopplung** mit der natürlichen Wasserkraft: **DE
+  r = +0,78 (p = 0,008), AT r = +0,72 / Spearman ρ = +0,76 (p = 0,011)** – als zusammengesetzter Wert
+  (P − ET₀) ist das die stärkste *Korrelation*, kein ursächlicher Top-Treiber; in DE bleibt der Rangtest
+  knapp unter 0,05 (ρ = +0,62, p(ρ) = 0,054). Am direktesten kovoariert D mit dem **Laufwasser** (abflussnah;
+  DE r = +0,81, AT r = +0,73) – der Speicherwasser-Anteil folgt zusätzlich der Bewirtschaftung. Die
+  **Schweiz** bleibt im selben Sommer schwach gepuffert (D r = +0,24, p > 0,05), doch der
+  **Frühlingsniederschlag** (Mär–Mai) als Vorlaufsignal erreicht **r = +0,70 (p = 0,024)** – konsistent mit
+  der alpinen Speicher-/Schneepufferung. Monatsanomalien bestätigen das DE/AT-Muster auch im konservativeren
+  **Year-Block-Permutationstest** (DE r = +0,62, p_B = 0,002; AT r = +0,54, p_B = 0,006). Der gegen die
+  **Klimanormal 1991–2020** standardisierte D ist als **Saisonaler Wasserbilanz-Index Z_JJA** ausgewiesen
+  (μ/σ aus den 30 Sommer-Summen 1991–2020; transparente z-Transformierte, **bewusst kein SPEI** – keine
+  log-logistic-Wahrscheinlichkeitstransformation). Es bleibt eine **explorative Korrelation, kein
+  Kausalnachweis**; die p-Werte sind **nicht auf Mehrfachvergleiche adjustiert**, bei kleinem Stichprobenumfang.
 
 ## Methode des Wetter-Blocks (Abschnitt 5)
 
-* **Raster statt Schwerpunkt:** Pro Land wird ein Raster repräsentativer, **alpin gewichteter** Zellen
-  (dort läuft die Wasserkraft) definiert; die Tageswerte aller Zellen werden pro Land gemittelt.
-  (Als Näherung für die vom Audit empfohlene Becken-Gewichtung; echte Einzugsgebiets-Shapefiles werden
-  nicht aufgelöst.)
+* **Raster statt Schwerpunkt:** Pro Land wird ein **alpin fokussiertes Raster** repräsentativer Zellen
+  (dort läuft die Wasserkraft) definiert; die Tageswerte aller Zellen werden pro Land **unkewichtet**
+  gemittelt. (Als grobe Näherung für die vom Audit empfohlene Becken-Gewichtung; es ist *keine* echte
+  Einzugsgebiets-/Kapazitätsgewichtung, echte Shapefiles werden nicht aufgelöst.)
 * **Wasserbilanz als integrierter Treiber:** D = P − ET₀ (mm über Juni–August), dazu die Rohdriver
-  Temperatur, Niederschlag, Globstrahlung und ET₀ einzeln.
+  Temperatur, Niederschlag, Globstrahlung und ET₀ einzeln. Primäre Kopplung: D → **Laufwasser**
+  (abflussnah); sekundär: D → natürliche Wasserkraft; separat: D → Speicherwasser (Bewirtschaftung).
 * **Zwei Baselines (getrennt, wie vom Audit empfohlen):** (1) **Klimabasis 1991–2020** (feste
-  WMO-Normal) für die Standardisierung der Wettervariablen zu z-Werten / dem SPEI-3-Proxy; (2)
+  WMO-Normal) für die Standardisierung der Wettervariablen zu z-Werten / dem **Saisonalen
+  Wasserbilanz-Index Z_JJA** (μ/σ aus den 30 *Sommer-Summen*, nicht aus Einzelmonaten); (2)
   **Energiebasis 2017–2025** für die Erzeugungsanomalie, weil energy-charts keine frühere
-  Erzeugungsreihe führt. Diese Asymmetrie ist Absicht und dokumentiert.
-* **Zwei Korrelations-Körner:** (1) **jährlich** über die zehn Sommer (n = 10); (2) **monatlich** als
-  **Binnen-Monats-Anomalie** – Wert minus Klimatologie derselben Land-Monat-Zelle –, damit der
-  saisonale Gang (Juni > August) nicht als Korrelation durchgeht (n ≈ 30).
+  Erzeugungsreihe führt. Diese Asymmetrie ist Absicht und dokumentiert. Es wird bewusst **kein echter
+  SPEI** gerechnet (keine log-logistic-Anpassung/Wahrscheinlichkeitstransformation).
+* **Zwei Korrelations-Körner:** (1) **jährlich** über die zehn Sommer (n = 10, unabhängig); (2)
+  **monatlich** als **Binnen-Monats-Anomalie** – Wert minus Klimatologie derselben Land-Monat-Zelle –,
+  damit der saisonale Gang (Juni > August) nicht als Korrelation durchgeht. Die Monatsbeobachtungen sind
+  binnen einer Saison **nicht unabhängig** (Juni–August + Autokorrelation), deshalb ist der Student-t-p
+  zu optimistisch; zusätzlich wird ein konservativerer **Year-Block-Permutations-p (p_B)** ausgewiesen,
+  der ganze Sommer vertauscht (~10 000 Permutationen, fester Seed) statt einzelner Monate.
 * **Vorlaufsignal:** Frühlingsniederschlag (Mär–Mai) → Sommer-Wasserkraft als Ersatz für den
-  Schnee-/Vorlaufspeicher (SWE ist in der Open-Meteo-Tages-API nicht verfügbar, s. Datengrenzen).
+  Schnee-/Vorlaufspeicher (SWE liegt in der gewählten langen ERA5-Tagesreihe nicht vor, s. Datengrenzen).
 * **Zwei Koeffizienten:** **Pearson r** (linear) und **Spearman ρ** (monoton, robust bei kleinem n),
   je mit zweiseitigem p-Wert über die Student-t-Verteilung (Freiheitsgrad n − 2), ohne scipy – die
-  reguläre unvollständige Beta wird per Kettenbruch (Lentz) ausgewertet. Eine multivariate Regression
-  H ~ P+T+Solar wird bei n = 10 und kollinearen Fahrern bewusst **nicht** als robust ausgewiesen.
+  reguläre unvollständige Beta wird per Kettenbruch (Lentz) ausgewertet. Die p-Werte über das gesamte
+  Testfeld (3 Länder × mehrere Treiber × 2 Körner) sind **explorativ und nicht auf Mehrfachvergleiche
+  adjustiert** (kein FDR). Eine multivariate Regression H ~ P+T+Solar wird bei n = 10 und kollinearen
+  Fahrern bewusst **nicht** als robust ausgewiesen.
 * **Modellkonstanz:** durchgehend **ERA5** (single reanalysis) über `archive-api.open-meteo.com`, kein
   „Best-Match“-Modelmixing – wichtig, damit kein Modellwechsel als Klimateffekt durchgeht.
 * **Skript:** `scripts/fetch_weather.py` (Abruf + gzip-Cache in `data/raw/`, inkl. ET₀),
@@ -169,16 +182,22 @@ der Cache in `data/raw/` erlaubt Abbruch und Fortsetzung ohne erneuten Download.
   tatsächliche kommerzielle Rendite. Die 15-Minuten-Erzeugung wird dabei dem nächstliegenden
   Stundenpreis zugeordnet; die Bruttowerte sind richtungsgebend, nicht auf die letzte Dezimalstelle
   reproduzierbar.
-* **Wetterkorrelation (Abschnitt 5):** ERA5 ist eine Reanalyse mit ca. 25–31 km Rasterauflösung; die
-  alpin gewichteten Zellen sind eine Näherung für das reale Einzugsgebiet der Kraftwerke (keine echte
-  Becken-Gewichtung). Der Jahres-Korrelationsumfang ist klein (n = 10), daher werden r und ρ immer mit
-  p-Wert und n ausgewiesen und die Analyse ist **explorativ** – ein statistischer Zusammenhang, kein
-  Kausalbeweis. Es wird kein expliziter Abfluss-/Hydrologiemodell gerechnet, sondern die Korrelation
+* **Wetterkorrelation (Abschnitt 5):** ERA5 ist eine Reanalyse mit ca. 25–31 km Rasterauflösung; das
+  alpin fokussierte, **unkewichtete** Raster ist eine grobe Näherung für das reale Einzugsgebiet der
+  Kraftwerke (keine echte Becken-/Kapazitätsgewichtung). Der Jahres-Korrelationsumfang ist klein (n = 10),
+  daher werden r und ρ immer mit p-Wert und n ausgewiesen und die Analyse ist **explorativ** – ein
+  statistischer Zusammenhang, kein Kausalbeweis; die p-Werte sind **nicht auf Mehrfachvergleiche
+  adjustiert**. Es wird kein expliziter Abfluss-/Hydrologiemodell gerechnet, sondern die Korrelation
   zwischen Wasserbilanz (D = P − ET₀) bzw. Wettervariablen und der beobachteten Erzeugung. Der
-  standardisierte D ist ein **SPEI-3-Proxy** (einheitliche z-Transformierte der Wasserbilanz gegen
-  1991–2020), kein vollständig verteilungsgefittes SPEI. **Snow Water Equivalent (SWE)** ist über die
-  Open-Meteo-Tages-API nicht verfügbar; der alpine Vorlaufspeicher wird deshalb nur indirekt über den
-  Frühlingsniederschlag (Mär–Mai) als Vorlaufsignal abgebildet.
+  standardisierte D ist ein **Saisonaler Wasserbilanz-Index Z_JJA** (einheitliche z-Transformierte der
+  Sommer-Wasserbilanz gegen die 30 Sommer-Summen 1991–2020), **bewusst kein SPEI** (keine
+  Verteilungsanpassung/Wahrscheinlichkeitstransformation). Die **Monatsanomalien** sind binnen einer
+  Saison nicht unabhängig (Juni–August, Autokorrelation); der Student-t-p ist dort zu optimistisch, darum
+  wird ein konservativerer **Year-Block-Permutations-p (p_B)** angegeben. **Snow Water Equivalent (SWE)**
+  liegt in der gewählten langen ERA5-Tagesreihe **nicht** vor (Schneevariablen gibt es bei Open-Meteo nur
+  in anderen Produkten wie ERA5-Land `snow_depth` oder CERRA `snow_depth_water_equivalent`, dessen Reihe
+  Mitte 2021 endet); der alpine Vorlaufspeicher wird deshalb nur indirekt über den Frühlingsniederschlag
+  (Mär–Mai) als Vorlaufsignal abgebildet.
 
 ## Datenlizenz
 

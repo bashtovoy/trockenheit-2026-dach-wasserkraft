@@ -14,17 +14,26 @@ Design (external-methodology audit, incorporated):
     that actually drives runoff, folding temperature/radiation into evaporative
     demand instead of treating them as separate crude proxies.
   * Climate baseline: every driver is STANDARDIZED against the fixed
-    1991-2020 ERA5 climatology (WMO reference period). The z of D is reported
-    as a "Wasserbilanz-Index" - an SPEI-3 proxy (a standardized water balance,
-    negative = deficit). This is NOT a full log-logistic-fitted SPEI; it is a
-    transparent standardized deficit, labelled as a proxy.
+    1991-2020 ERA5 climatology (WMO reference period). The z of the summer D
+    (a Jun-Aug SUM, mu/sigma taken across the 30 seasonal-sum values) is
+    reported as a "Saisonaler Wasserbilanz-Index Z_JJA" (negative = deficit).
+    This is deliberately a plain seasonal z-score, NOT a real SPEI: SPEI
+    requires a log-logistic probability transform of a 3-month rolling water
+    balance, which we do not claim to implement.
   * Energy baseline stays 2017-2025 (the hydro side cannot use 1991-2020:
     Energy-Charts has no earlier generation record) - documented asymmetry.
   * Two grains: ANNUAL summers (n = analysis years, 10) and MONTHLY
     within-month anomalies (value minus that country-month climatology) so the
-    seasonal cycle does not masquerade as correlation (n ~ 30).
+    seasonal cycle does not masquerade as correlation (~30 obs). The monthly
+    obs are NOT independent (3 months per season + autocorrelation), so the
+    Student-t p is optimistic; a year-block permutation p (p_block) that
+    permutes hydro seasons across weather seasons at the whole-year level is
+    reported alongside it as the honest significance.
   * Antecedent: spring (Mar-May) precipitation -> summer hydro (prior-store
-    proxy; snow-water-equivalent is not exposed by the Open-Meteo daily API).
+    proxy; snow-water-equivalent is not available in the selected long ERA5
+    daily series - snow variables live only in other Open-Meteo products such
+    as ERA5-Land snow_depth or CERRA snow_depth_water_equivalent, whose record
+    ends mid-2021).
   * Two coefficients per pair: Pearson r (linear) AND Spearman rho (monotonic,
     robust for small n), each with a two-tailed p (Student t via the
     regularized incomplete beta; no scipy).
@@ -36,6 +45,7 @@ from __future__ import annotations
 import gzip
 import json
 import math
+import random
 import statistics as st
 from pathlib import Path
 
@@ -157,6 +167,41 @@ def _corr(x: list[float], y: list[float]) -> dict:
     r, p, n = pearson(x, y)
     rho, p_rho, _ = spearman(x, y)
     return {"r": r, "p": p, "rho": rho, "p_rho": p_rho, "n": n}
+
+
+def _year_block_perm_p(blocks: dict, obs_r: float, b: int = 10000,
+                       seed: int = 20261002) -> float | None:
+    """Two-sided year-block permutation p for a pooled within-month anomaly r.
+
+    ``blocks`` maps {year: {month: (wx_anom, hydro_anom)}}. Observations stay
+    grouped by year so the June-July-August structure (and its autocorrelation)
+    is preserved; the null re-assigns whole hydro seasons to weather seasons by
+    permuting years and recomputes Pearson r on the month-aligned pool.
+    """
+    years = sorted(blocks)
+    n = len(years)
+    if n < 3 or obs_r is None or math.isnan(obs_r):
+        return None
+    rng = random.Random(seed)
+    idx = list(range(n))
+    abs_obs = abs(obs_r)
+    ge = 0
+    for _ in range(b):
+        perm = idx[:]
+        rng.shuffle(perm)
+        xs, ys = [], []
+        for i, y in enumerate(years):
+            wy = years[perm[i]]
+            by, bw = blocks[y], blocks[wy]
+            for m, (wx, _hv) in by.items():
+                if m in bw:
+                    xs.append(wx)
+                    ys.append(bw[m][1])
+        if len(xs) > 2:
+            r = pearson(xs, ys)[0]
+            if r is not None and not math.isnan(r) and abs(r) >= abs_obs:
+                ge += 1
+    return (ge + 1) / (b + 1)
 
 
 # ------------------------------------------------------------- data loading --
@@ -310,6 +355,7 @@ def compute(summary: dict) -> dict:
             hclim[m] = st.mean(vs) if vs else None
         for wv in ("t", "p", "rad", "D_m"):
             xs, ysv = [], []
+            blocks = {}
             for y in ANALYSIS_YEARS:
                 for m in SUMMER:
                     if y not in months[c] or m not in months[c][y] or (y, m) not in hmon[c]:
@@ -329,8 +375,13 @@ def compute(summary: dict) -> dict:
                     hv = hmon[c][(y, m)]
                     if hv is None or hclim.get(m) is None:
                         continue
-                    xs.append(wx); ysv.append(hv - hclim[m])
-            monthly[c][wv] = _corr(xs, ysv)
+                    ha = hv - hclim[m]
+                    xs.append(wx); ysv.append(ha)
+                    blocks.setdefault(y, {})[m] = (wx, ha)
+            res = _corr(xs, ysv)
+            pb = _year_block_perm_p(blocks, res["r"])
+            res["p_block"] = round(pb, 4) if pb is not None else None
+            monthly[c][wv] = res
 
     # ---- scatter: Wasserbilanz-Index z(D) vs natural hydro (% of analysis mean) ----
     scatter = {}
@@ -374,8 +425,8 @@ def compute(summary: dict) -> dict:
         "window": "summer 06-01..08-31; antecedent 03-01..05-31",
         "climate_baseline": "1991-2020 (WMO reference period)",
         "energy_baseline": "2017-2025 (Energy-Charts hydro record; no earlier data)",
-        "index_def": "Wasserbilanz-Index z = ((P - ET0)_summer - mu_1991-2020)/sigma_1991-2020; <0 = Defizit (SPEI-3-Proxy)",
-        "grain_note": "annual = raw summer values; monthly = within-month anomalies; D = P-ET0",
+        "index_def": "Saisonaler Wasserbilanz-Index Z_JJA = ((P-ET0)_Jun-Aug - mu_JJA(1991-2020))/sigma_JJA(1991-2020); <0 = Defizit. Bewusst KEIN SPEI (keine log-logistic-Wahrscheinlichkeitstransformation).",
+        "grain_note": "annual = raw summer values (n=10, indep.); monthly = within-month anomalies (obs clustered by season -> p_block = year-block permutation p, Student-t p optimistic)",
         "years": ys_all,
         "cells": {c: _cell_latlon(c) for c in COUNTRIES},
         "baseline": baseline,
@@ -400,7 +451,7 @@ def main() -> None:
         for k in DRIVERS:
             v = a[k]
             print(f"  {k:>8}: Pearson r={v['r']:+.2f}(p={v['p']:.3f})  Spearman rho={v['rho']:+.2f}(p={v['p_rho']:.3f})  n={v['n']}")
-        print(f"  monthly D-anom: r={m['D_m']['r']:+.2f}(p={m['D_m']['p']:.3f}) n={m['D_m']['n']}")
+        print(f"  monthly D-anom: r={m['D_m']['r']:+.2f}(p={m['D_m']['p']:.3f}, p_block={m['D_m'].get('p_block')}) n={m['D_m']['n']}")
 
 
 if __name__ == "__main__":
