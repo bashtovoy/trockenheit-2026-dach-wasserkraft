@@ -80,7 +80,7 @@ Wichtigste Befunde:
   DE r = +0,81, AT r = +0,73) – der Speicherwasser-Anteil folgt zusätzlich der Bewirtschaftung. Die
   **Schweiz** bleibt im selben Sommer schwach gepuffert (D r = +0,24, p > 0,05), doch der
   **Frühlingsniederschlag** (Mär–Mai) als Vorlaufsignal erreicht **r = +0,70 (p = 0,024)** – konsistent mit
-  der alpinen Speicher-/Schneepufferung. Monatsanomalien bestätigen das DE/AT-Muster auch im konservativeren
+  der alpinen Speicher-/Schneepufferung. Monatsanomalien bestätigen das DE/AT-Muster auch im
   **Year-Block-Permutationstest** (DE r = +0,62, p_B = 0,002; AT r = +0,54, p_B = 0,006). Der gegen die
   **Klimanormal 1991–2020** standardisierte D ist als **Saisonaler Wasserbilanz-Index Z_JJA** ausgewiesen
   (μ/σ aus den 30 Sommer-Summen 1991–2020; transparente z-Transformierte, **bewusst kein SPEI** – keine
@@ -94,7 +94,10 @@ Wichtigste Befunde:
   gemittelt. (Als grobe Näherung für die vom Audit empfohlene Becken-Gewichtung; es ist *keine* echte
   Einzugsgebiets-/Kapazitätsgewichtung, echte Shapefiles werden nicht aufgelöst.)
 * **Wasserbilanz als integrierter Treiber:** D = P − ET₀ (mm über Juni–August), dazu die Rohdriver
-  Temperatur, Niederschlag, Globstrahlung und ET₀ einzeln. Primäre Kopplung: D → **Laufwasser**
+  Temperatur, Niederschlag, Globstrahlung und ET₀ einzeln. D ist ein *meteorologischer*
+  Wasserbilanz-Proxy für den atmosphärischen Wasserhaushalt – **nicht** die tatsächliche
+  Beckenabfluss-Bilanz (zwischen P−ET₀ und Abfluss liegen Schnee-/Gletscher- und
+  Boden-/Grundwasserspeicher). Primäre Kopplung: D → **Laufwasser**
   (abflussnah); sekundär: D → natürliche Wasserkraft; separat: D → Speicherwasser (Bewirtschaftung).
 * **Zwei Baselines (getrennt, wie vom Audit empfohlen):** (1) **Klimabasis 1991–2020** (feste
   WMO-Normal) für die Standardisierung der Wettervariablen zu z-Werten / dem **Saisonalen
@@ -102,12 +105,13 @@ Wichtigste Befunde:
   **Energiebasis 2017–2025** für die Erzeugungsanomalie, weil energy-charts keine frühere
   Erzeugungsreihe führt. Diese Asymmetrie ist Absicht und dokumentiert. Es wird bewusst **kein echter
   SPEI** gerechnet (keine log-logistic-Anpassung/Wahrscheinlichkeitstransformation).
-* **Zwei Korrelations-Körner:** (1) **jährlich** über die zehn Sommer (n = 10, unabhängig); (2)
-  **monatlich** als **Binnen-Monats-Anomalie** – Wert minus Klimatologie derselben Land-Monat-Zelle –,
+* **Zwei Korrelations-Körner:** (1) **jährlich** über zehn aufeinanderfolgende Sommer (n = 10;
+  wegen der kurzen Zeitreihe nur **explorativ** – Inter-Jahres-Autokorrelation wird nicht modelliert);
+  (2) **monatlich** als **Binnen-Monats-Anomalie** – Wert minus Klimatologie derselben Land-Monat-Zelle –,
   damit der saisonale Gang (Juni > August) nicht als Korrelation durchgeht. Die Monatsbeobachtungen sind
   binnen einer Saison **nicht unabhängig** (Juni–August + Autokorrelation), deshalb ist der Student-t-p
-  zu optimistisch; zusätzlich wird ein konservativerer **Year-Block-Permutations-p (p_B)** ausgewiesen,
-  der ganze Sommer vertauscht (~10 000 Permutationen, fester Seed) statt einzelner Monate.
+  dort zu optimistisch; zusätzlich wird ein **Year-Block-Permutationstest (p_B)** ausgewiesen,
+  der ganze Sommer vertauscht (~10 000 Permutationen, fester Seed).
 * **Vorlaufsignal:** Frühlingsniederschlag (Mär–Mai) → Sommer-Wasserkraft als Ersatz für den
   Schnee-/Vorlaufspeicher (SWE liegt in der gewählten langen ERA5-Tagesreihe nicht vor, s. Datengrenzen).
 * **Zwei Koeffizienten:** **Pearson r** (linear) und **Spearman ρ** (monoton, robust bei kleinem n),
@@ -193,7 +197,8 @@ der Cache in `data/raw/` erlaubt Abbruch und Fortsetzung ohne erneuten Download.
   Sommer-Wasserbilanz gegen die 30 Sommer-Summen 1991–2020), **bewusst kein SPEI** (keine
   Verteilungsanpassung/Wahrscheinlichkeitstransformation). Die **Monatsanomalien** sind binnen einer
   Saison nicht unabhängig (Juni–August, Autokorrelation); der Student-t-p ist dort zu optimistisch, darum
-  wird ein konservativerer **Year-Block-Permutations-p (p_B)** angegeben. **Snow Water Equivalent (SWE)**
+  wird zusätzlich ein **Year-Block-Permutationstest (p_B)** angegeben (austauschbare ganze Jahresblöcke;
+  keine Inter-Jahres-Abhängigkeit). **Snow Water Equivalent (SWE)**
   liegt in der gewählten langen ERA5-Tagesreihe **nicht** vor (Schneevariablen gibt es bei Open-Meteo nur
   in anderen Produkten wie ERA5-Land `snow_depth` oder CERRA `snow_depth_water_equivalent`, dessen Reihe
   Mitte 2021 endet); der alpine Vorlaufspeicher wird deshalb nur indirekt über den Frühlingsniederschlag

@@ -10,9 +10,12 @@ drought index.
 Design (external-methodology audit, incorporated):
   * Raw drivers: summer mean 2 m temperature, summer precipitation sum, summer
     mean shortwave radiation, summer ET0 (FAO-56 reference evapotranspiration).
-  * Derived water-balance driver D = P - ET0 (mm over Jun-Aug): the deficit
-    that actually drives runoff, folding temperature/radiation into evaporative
-    demand instead of treating them as separate crude proxies.
+  * Derived water-balance driver D = P - ET0 (mm over Jun-Aug): a METEOROLOGICAL
+    water-balance proxy for the atmospheric water budget (ET0 is a reference
+    grass with unlimited water), folding temperature/radiation into evaporative
+    demand instead of treating them as separate crude proxies. It is NOT the
+    catchment runoff balance: snow/glacier and soil/groundwater storage sit
+    between P - ET0 and actual discharge (esp. in the Alps).
   * Climate baseline: every driver is STANDARDIZED against the fixed
     1991-2020 ERA5 climatology (WMO reference period). The z of the summer D
     (a Jun-Aug SUM, mu/sigma taken across the 30 seasonal-sum values) is
@@ -22,7 +25,9 @@ Design (external-methodology audit, incorporated):
     balance, which we do not claim to implement.
   * Energy baseline stays 2017-2025 (the hydro side cannot use 1991-2020:
     Energy-Charts has no earlier generation record) - documented asymmetry.
-  * Two grains: ANNUAL summers (n = analysis years, 10) and MONTHLY
+  * Two grains: ANNUAL summers (n = analysis years, 10 CONSECUTIVE years, so
+    lagged/inter-annual autocorrelation may remain -> purely exploratory) and
+    MONTHLY
     within-month anomalies (value minus that country-month climatology) so the
     seasonal cycle does not masquerade as correlation (~30 obs). The monthly
     obs are NOT independent (3 months per season + autocorrelation), so the
@@ -426,7 +431,7 @@ def compute(summary: dict) -> dict:
         "climate_baseline": "1991-2020 (WMO reference period)",
         "energy_baseline": "2017-2025 (Energy-Charts hydro record; no earlier data)",
         "index_def": "Saisonaler Wasserbilanz-Index Z_JJA = ((P-ET0)_Jun-Aug - mu_JJA(1991-2020))/sigma_JJA(1991-2020); <0 = Defizit. Bewusst KEIN SPEI (keine log-logistic-Wahrscheinlichkeitstransformation).",
-        "grain_note": "annual = raw summer values (n=10, indep.); monthly = within-month anomalies (obs clustered by season -> p_block = year-block permutation p, Student-t p optimistic)",
+        "grain_note": "annual = raw summer values (n=10 consecutive summers, exploratory - inter-annual autocorrelation not modeled); monthly = within-month anomalies -> p_block from a year-block permutation test (blocks exchangeable whole summers; Student-t p assumes independence and is optimistic here)",
         "years": ys_all,
         "cells": {c: _cell_latlon(c) for c in COUNTRIES},
         "baseline": baseline,

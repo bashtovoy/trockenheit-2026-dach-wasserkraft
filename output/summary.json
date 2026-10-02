@@ -53456,7 +53456,7 @@
   "climate_baseline": "1991-2020 (WMO reference period)",
   "energy_baseline": "2017-2025 (Energy-Charts hydro record; no earlier data)",
   "index_def": "Saisonaler Wasserbilanz-Index Z_JJA = ((P-ET0)_Jun-Aug - mu_JJA(1991-2020))/sigma_JJA(1991-2020); <0 = Defizit. Bewusst KEIN SPEI (keine log-logistic-Wahrscheinlichkeitstransformation).",
-  "grain_note": "annual = raw summer values (n=10, indep.); monthly = within-month anomalies (obs clustered by season -> p_block = year-block permutation p, Student-t p optimistic)",
+  "grain_note": "annual = raw summer values (n=10 consecutive summers, exploratory - inter-annual autocorrelation not modeled); monthly = within-month anomalies -> p_block from a year-block permutation test (blocks exchangeable whole summers; Student-t p assumes independence and is optimistic here)",
   "years": [
    2017,
    2018,
