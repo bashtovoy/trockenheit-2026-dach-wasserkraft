@@ -7,28 +7,53 @@ Pumpspeichersystems über alle drei Länder.
 
 Datenbasis: [energy-charts.info API v2](https://api.energy-charts.info/) (Fraunhofer ISE), Lizenz **CC BY 4.0**.
 
+**Dürre-Indikator:** die *natürliche Wasserkraft* = Laufwasser + Speicherwasser. Pumpspeicher (PSW)
+hängen nicht vom Abfluss ab – sie sind ein Speicher, der zuerst Strom aufnimmt – und werden daher
+getrennt ausgewiesen, statt das Trockenheitssignal zu maskieren.
+
+## Datenstand und Reproduzierbarkeit
+
+| | |
+|---|---|
+| Data retrieval (Snapshot) | **2026-10-02** |
+| Energy-Charts API | **v2** |
+| Analysefenster | **01.06 – 31.08** (Sommer) |
+| Referenzperiode | **2017 – 2025** (Mittel) |
+| Vergleichsjahr | **2026** |
+
+Die API aktualisiert historische Reihen fortlaufend (aktuell bis Ende September 2026). Die
+Kennzahlen dieses Berichts wurden auf dem oben genannten Snapshot berechnet; ein späterer
+Durchlauf kann daher leicht abweichende Werte liefern.
+
 ## Ergebnisse
 
-Interaktiver Bericht: [`output/report.html`](output/report.html) – 24 Diagramme (Chart.js) und
+Interaktiver Bericht: [`output/report.html`](output/report.html) – 26 Diagramme (Chart.js) und
 vollständige Jahrestabellen für alle drei Länder. Alle Zahlen im Abschnitt „Fazit“ werden aus den
 Daten generiert und können nicht von den Tabellen abweichen.
 
 Wichtigste Befunde:
 
-* **Gleichzeitigkeit des Trockenjahres:** DE + AT + CH erzeugten im Sommer 2026 zusammen 23 342 GWh
-  Wasserkraft gegenüber 32 049 GWh im Mittel (−27 %) – es fehlen rund 8 700 GWh. Die
-  Speicherwasserkraft (der steuerbare Bestand) halbierte sich beinahe (−47 %). Die Trockenheit war
-  kein nationales, sondern ein alpines Ereignis.
-* **Österreich** – der stärkste Rückgang: 7 452 GWh (−33 %, **Tiefstwert des Jahrzehnts**); zuerst traf
-  es das Laufwasser (−33 %), Speicherwasser −45 %. Der Wasserkraftanteil an der Last fiel von 79 % auf
-  55 % (so tief wie nie im Jahrzehnt) und Österreich wechselte vom Nettoexport zum Nettoimport
-  (1 430 GWh, +10,6 % des Verbrauchs).
-* **Schweiz**: 9 137 GWh (−30 %, ebenfalls schlechtester Sommer des Jahrzehnts); Speicherwasser
-  3 053 GWh gegenüber 5 901 GWh im Mittel (−48 %). Anteil an der Last 85 % → 53 % bei Rekordverbrauch;
-  Nettoexport schrumpfte auf 2 147 GWh gegenüber 4 175 GWh im Mittel.
-* **Deutschland**: 6 754 GWh (−15 %, Platz 9 von zehn); Laufwasser 3 557 GWh – Tiefstwert des Fensters,
-  22 % unter dem Dürrejahr 2018. Da Wind und Solar hoch liefen (EE-Anteil 67,8 %), fiel das
-  Wasserkraft-Defizit bilanziell kaum auf – ein Puffer, den die Schweiz und Österreich nicht haben.
+* **Dürre-Maßstab, natürliche Wasserkraft:** DE + AT + CH erzeugten im Sommer 2026 zusammen
+  18 415 GWh Lauf- und Speicherwasser gegenüber 27 345 GWh im Mittel (−32,7 %) – rund ein Drittel.
+  Alle drei Länder lagen gleichzeitig auf dem tiefsten Stand des Jahrzehnts (DE −30,8 %, AT −34,7 %,
+  CH −31,9 %). Rechnet man die Pumpspeicher hinzu („Wasserkraft gesamt“ = 23 342 GWh, −27,2 %),
+  fällt der ausgewiesene Rückgang milder aus – die überdurchschnittliche PSW-Erzeugung (4 928 GWh,
+  +4,8 %) maskiert den eigentlichen Wassermangel, besonders in Deutschland.
+* **Gleichzeitigkeit:** Die Daten zeigen ein gleichzeitig auftretendes Wasserkraftdefizit über alle
+  drei Länder – ein überregionales hydrologisches Signal; ob es ein einheitliches Witterungsereignis
+  war, lässt sich aus den Erzeugungsdaten allein nicht abschließend belegen.
+* **Österreich** – der stärkste Rückgang: 7 452 GWh gesamt (−33 %); zuerst traf es das Laufwasser
+  (−33 %), Speicherwasser −45 %. Der Anteil der *natürlichen* Wasserkraft an der Last fiel auf
+  47,7 % (brutto inkl. PSW 55,5 %) – so tief wie nie im Jahrzehnt – und Österreich wechselte vom
+  Nettoexport zum Nettoimport (1 430 GWh).
+* **Schweiz**: 9 137 GWh gesamt (−30 %, ebenfalls schlechtester Sommer des Jahrzehnts); die
+  Erzeugung aus Speicherwasserkraft sank auf 3 053 GWh gegenüber 5 901 GWh im Mittel (−48 %). Der
+  Anteil der natürlichen Wasserkraft an der Last fiel auf 47,0 % (brutto 53,2 %); der Nettoexport
+  schrumpfte auf 2 147 GWh gegenüber 4 175 GWh im Mittel.
+* **Deutschland**: 6 754 GWh gesamt (−15 %, Platz 9 von zehn), aber natürliche Wasserkraft −30,8 %
+  (Tiefstwert, Platz 1 von 10) – der milde Gesamtwert ist der hohen PSW-Erzeugung geschuldet. Da
+  Wind (inkl. Offshore, 27 252 GWh) und Solar hoch liefen (EE-Anteil 67,8 %), war der bilanzielle
+  Druck gering; ein Ersatz des Defizits ist das aber nicht, denn Deutschland blieb Nettoimporteur.
 * **Pumpspeicher**: Deutschland – Mengen nahe am Rekord (Erzeugung 2 819, Pumpstrom 3 635 GWh), aber
   **neues Betriebsregime**: Nacht-Pumpen 57 % → 4 %, Mittagspumpen (10–16 Uhr) 26 % → 71 %,
   Abend-Erzeugung (17–24 Uhr) 52 % → 74 %. Capture-Spread 134,6 €/MWh, theoretischer Arbitragewert des

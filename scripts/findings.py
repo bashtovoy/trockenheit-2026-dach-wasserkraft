@@ -118,19 +118,25 @@ def build(summary) -> str:
     de_sol_mean = mean_of(summary["de_hydro"], "solar_gwh", BASE)
     items.append(
         f"<b>Warum das Wasserkraft-Defizit in Deutschland bilanziell kaum auffiel:</b> "
-        f"Wind + Solar lagen im Sommer 2026 bei {num(hy['de'][CUR]['wind_gwh'])} + "
+        f"Wind (inkl. Offshore) + Solar lagen im Sommer 2026 bei {num(hy['de'][CUR]['wind_gwh'])} + "
         f"{num(hy['de'][CUR]['solar_gwh'])} GWh gegenüber {num(de_wind_mean)} + {num(de_sol_mean)} GWh "
         f"im Mittel, und der EE-Anteil am Verbrauch erreichte "
         f"{num(hy['de'][CUR]['renewable_share_of_load_pct'],1)}{THIN}% – der Höchstwert des Fensters bei "
         f"{num(mean_of(summary['de_hydro'],'renewable_share_of_load_pct',BASE),1)}{THIN}% im Mittel. "
         f"Wasserkraft deckt in DE nur "
-        f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% des Verbrauchs, ihr Fehlbetrag "
-        f"({num(de26['hydro_total_gwh']-de_hyd_mean, 0, sign=True)} GWh) wurde von Wind und Solar "
-        f"aufgefangen. In der Schweiz war dieser Puffer deutlich kleiner, aber nicht null: Auch dort "
-        f"stieg die Solarproduktion sprunghaft auf {num(v(hy,'ch',CUR,'solar_gwh'))} GWh statt "
-        f"{num(mean_of(summary['ch_hydro'],'solar_gwh',BASE))} GWh im Mittel und fing einen Teil des "
-        f"Wasserkraftdefizits auf – doch weil die Wasserkraft dort über die Hälfte der Last deckt und "
-        f"Wind kaum zunahm, blieb der relative Fehlbetrag grösser als in Deutschland.")
+        f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% des Verbrauchs (davon natürliche "
+        f"Wasserkraft {num(hy['de'][CUR]['natural_share_of_load_pct'],1)}{THIN}%); ihr Fehlbetrag "
+        f"({num(de26['hydro_total_gwh']-de_hyd_mean, 0, sign=True)} GWh, natürliche Wasserkraft "
+        f"{num(de26['natural_gwh']-mean_of(summary['de_hydro'],'natural_gwh',BASE), 0, sign=True)} GWh) war "
+        f"mengenmässig klein gegen den Zuwachs von Wind und Solar, die zusammen gut "
+        f"{num((hy['de'][CUR]['wind_gwh']-de_wind_mean)+(hy['de'][CUR]['solar_gwh']-de_sol_mean))} GWh über "
+        f"dem Mittel lagen. Das entlastete die Bilanz – ersetzte das Defizit aber nicht physikalisch, denn "
+        f"Deutschland blieb im Sommer 2026 Nettoimporteur (Abschnitt&nbsp;4); „aufgefangen“ ist daher eine "
+        f"bilanzielle, keine nachgewiesene kausale Deutung. In der Schweiz war dieser Puffer deutlich "
+        f"kleiner, aber nicht null: Auch dort stieg die Solarproduktion sprunghaft auf "
+        f"{num(v(hy,'ch',CUR,'solar_gwh'))} GWh statt {num(mean_of(summary['ch_hydro'],'solar_gwh',BASE))} GWh "
+        f"im Mittel und glich einen Teil des Defizits aus – doch weil die Wasserkraft dort über die Hälfte "
+        f"der Last deckt und Wind kaum zunahm, blieb der relative Fehlbetrag grösser als in Deutschland.")
 
     # ---- 3. Oesterreich ---------------------------------------------------
     at26 = hy["at"][CUR]
@@ -138,6 +144,7 @@ def build(summary) -> str:
     at_ror_mean = mean_of(summary["at_hydro"], "run_of_river_gwh", BASE)
     at_res_mean = mean_of(summary["at_hydro"], "reservoir_gwh", BASE)
     at_share_mean = mean_of(summary["at_hydro"], "hydro_share_of_load_pct", BASE)
+    at_nat_share_mean = mean_of(summary["at_hydro"], "natural_share_of_load_pct", BASE)
     at_rank = sorted((r["hydro_total_gwh"] for r in summary["at_hydro"]), reverse=True).index(
         at26["hydro_total_gwh"]) + 1
     items.append(
@@ -147,9 +154,12 @@ def build(summary) -> str:
         f"Laufwasser: {num(at26['run_of_river_gwh'])} GWh statt {num(at_ror_mean)} GWh im Mittel "
         f"({pct(100*(at26['run_of_river_gwh']/at_ror_mean-1))}); Speicherwasser "
         f"{num(at26['reservoir_gwh'])} GWh statt {num(at_res_mean)} GWh "
-        f"({pct(100*(at26['reservoir_gwh']/at_res_mean-1))}). Weil die Wasserkraft in einem Normalsommer "
-        f"{num(at_share_mean,0)}{THIN}% der österreichischen Last gedeckt hätte, fiel ihr Anteil auf "
-        f"{num(at26['hydro_share_of_load_pct'],0)}{THIN}% – der tiefste Wert der zehn Jahre.")
+        f"({pct(100*(at26['reservoir_gwh']/at_res_mean-1))}). Weil die <i>natürliche</i> Wasserkraft in einem "
+        f"Normalsommer {num(at_nat_share_mean,0)}{THIN}% der österreichischen Last gedeckt hätte, fiel ihr "
+        f"Anteil auf {num(at26['natural_share_of_load_pct'],0)}{THIN}% – der tiefste Wert der zehn Jahre. "
+        f"Der Brutto-Wasserkraftanteil inklusive Pumpspeicher – deren Erzeugung von "
+        f"{num(v(ps,'at',CUR,'ps_generation_gwh'))} GWh ist keine zusätzliche natürliche Wasserkraft – lag "
+        f"bei {num(at26['hydro_share_of_load_pct'],0)}{THIN}%.")
 
     # ---- 3b. Schweiz ------------------------------------------------------
     ch26 = hy["ch"][CUR]
@@ -161,8 +171,9 @@ def build(summary) -> str:
         f"<b>Die Schweiz war fast ebenso stark betroffen: {num(ch26['hydro_total_gwh'])} GWh, "
         f"{pct(100*(ch26['hydro_total_gwh']/ch_hyd_mean-1))} gegenüber dem Mittel und "
         f"{pct(d100(hy,'ch',CUR,'hydro_total_gwh',2025))} gegenüber Sommer 2025</b> – der schlechteste "
-        f"Sommer der zehn Jahre. Der Rückgang traf die Speicherwasserkraft, also den "
-        f"steuerbaren Bestand: {num(ch26['reservoir_gwh'])} GWh statt {num(ch_res_mean)} GWh im Mittel "
+        f"Sommer der zehn Jahre. Der Rückgang traf die Speicherwasserkraft, also die <i>Erzeugung</i> der "
+        f"steuerbaren Speicherkraftwerke – nicht den gespeicherten Wasserinhalt, der separat gemessen würde: "
+        f"{num(ch26['reservoir_gwh'])} GWh statt {num(ch_res_mean)} GWh im Mittel "
         f"({pct(100*(ch26['reservoir_gwh']/ch_res_mean-1))}); im Rekordjahr {ch_wet['year']} waren es "
         f"{num(ch_wet['reservoir_gwh'])} GWh. Laufwasser fiel moderater aus "
         f"({pct(100*(ch26['run_of_river_gwh']/ch_ror_mean-1))}).")
@@ -176,25 +187,30 @@ def build(summary) -> str:
     reg_res_mean = sum(mean_of(summary[f"{c}_hydro"], "reservoir_gwh", BASE) for c in ("de", "at", "ch"))
     reg_ps = sum(v(ps, c, CUR, "ps_generation_gwh") or 0 for c in ("de", "at", "ch"))
     reg_ps_mean = sum(mean_of(summary[f"{c}_ps"], "ps_generation_gwh", BASE) for c in ("de", "at", "ch"))
+    reg_nat = sum(v(hy, c, CUR, "natural_gwh") or 0 for c in ("de", "at", "ch"))
+    reg_nat_mean = sum(mean_of(summary[f"{c}_hydro"], "natural_gwh", BASE) for c in ("de", "at", "ch"))
     low_share = sum(1 for c in ("de", "at", "ch")
-                    if hy[c][CUR].get("hydro_share_of_load_pct") is not None
-                    and hy[c][CUR]["hydro_share_of_load_pct"]
-                    <= min((x["hydro_share_of_load_pct"] for x in summary[f"{c}_hydro"]
-                            if x["year"] != CUR and x.get("hydro_share_of_load_pct") is not None),
+                    if hy[c][CUR].get("natural_share_of_load_pct") is not None
+                    and hy[c][CUR]["natural_share_of_load_pct"]
+                    <= min((x["natural_share_of_load_pct"] for x in summary[f"{c}_hydro"]
+                            if x["year"] != CUR and x.get("natural_share_of_load_pct") is not None),
                            default=9e9))
     items.append(
-        f"<b>Der Alpenraum als Ganzes:</b> DE + AT + CH erzeugten im Sommer 2026 zusammen "
-        f"{num(reg[CUR])} GWh Wasserkraft gegenüber {num(reg_mean)} GWh im Mittel "
-        f"({pct(100*(reg[CUR]/reg_mean-1))}) – es fehlen {num(reg_mean-reg[CUR])} GWh. Der eigentliche "
-        f"Befund ist die Gleichzeitigkeit: in {low_share} der drei Länder – Österreich und die Schweiz – "
-        f"war der Wasserkraftanteil an der Last so tief wie nie im Jahrzehnt, und das auf einem Niveau, "
-        f"das trotzdem weit über Deutschland liegt: AT {num(hy['at'][CUR]['hydro_share_of_load_pct'],0)}{THIN}% "
-        f"und CH {num(hy['ch'][CUR]['hydro_share_of_load_pct'],0)}{THIN}% gegenüber nur "
-        f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% in DE. Die Daten zeigen ein "
+        f"<b>Der Alpenraum als Ganzes:</b> Die <i>natürliche</i> Wasserkraft (Laufwasser + Speicherwasser) "
+        f"der drei Länder fiel im Sommer 2026 auf {num(reg_nat)} GWh gegenüber {num(reg_nat_mean)} GWh im "
+        f"Mittel ({pct(100*(reg_nat/reg_nat_mean-1))}) – es fehlen {num(reg_nat_mean-reg_nat)} GWh. "
+        f"Rechnet man die Pumpspeicher mit („Wasserkraft gesamt“ = {num(reg[CUR])} GWh), fällt der "
+        f"ausgewiesene Rückgang mit {pct(100*(reg[CUR]/reg_mean-1))} deutlich milder aus – die "
+        f"PSW-Erzeugung überdeckt das Wasserdefizit (Zahlen unten). Der eigentliche Befund ist die "
+        f"Gleichzeitigkeit: in {low_share} von 3 Ländern war der Anteil der natürlichen Wasserkraft an der "
+        f"Last so tief wie nie im Jahrzehnt – und zwar auf sehr unterschiedlichem Niveau: AT "
+        f"{num(hy['at'][CUR]['natural_share_of_load_pct'],0)}{THIN}% und CH "
+        f"{num(hy['ch'][CUR]['natural_share_of_load_pct'],0)}{THIN}% gegenüber nur "
+        f"{num(hy['de'][CUR]['natural_share_of_load_pct'],1)}{THIN}% in DE. Die Daten zeigen ein "
         f"gleichzeitig auftretendes Wasserkraftdefizit in allen drei Ländern – ein überregionales "
         f"hydrologisches Signal im DACH-Raum; ob es ein einheitliches Witterungsereignis war, lässt sich "
-        f"aus den Erzeugungsdaten allein nicht abschliessend belegen. Am deutlichsten wird das beim steuerbaren Wasser – die "
-        f"Speicherwasserkraft "
+        f"aus den Erzeugungsdaten allein nicht abschliessend belegen. Am deutlichsten wird das bei der "
+        f"Speicherwasser-Erzeugung – die "
         f"der drei Länder zusammen lieferte nur {num(reg_res[CUR])} GWh statt {num(reg_res_mean)} GWh "
         f"({pct(100*(reg_res[CUR]/reg_res_mean-1))}), also rund die Hälfte des üblichen Sommerbeitrags. "
         f"Die Pumpspeicher des Raums hielten ihre Menge dagegen: {num(reg_ps)} GWh Erzeugung gegenüber "
@@ -204,12 +220,13 @@ def build(summary) -> str:
     ch26m = [m for m in summary["ch_monthly"] if m["year"] == CUR]
     fl_ch = [r for r in summary.get("flows", []) if r["country"] == "CH"]
     txt = (
-        f"<b>Folge für die Schweizer Bilanz:</b> der Wasserkraftanteil am Verbrauch fiel von "
-        f"{num(mean_of(summary['ch_hydro'],'hydro_share_of_load_pct',BASE),0)}{THIN}% auf "
-        f"{num(ch26['hydro_share_of_load_pct'],0)}{THIN}%, bei einem Rekord-Sommerverbrauch von "
+        f"<b>Folge für die Schweizer Bilanz:</b> der Anteil der <i>natürlichen</i> Wasserkraft am Verbrauch "
+        f"fiel von {num(mean_of(summary['ch_hydro'],'natural_share_of_load_pct',BASE),0)}{THIN}% auf "
+        f"{num(ch26['natural_share_of_load_pct'],0)}{THIN}% (brutto inkl. Pumpspeicher "
+        f"{num(ch26['hydro_share_of_load_pct'],0)}{THIN}%), bei einem Rekord-Sommerverbrauch von "
         f"{num(ch26['load_gwh'])} GWh ({pct(100*(ch26['load_gwh']/mean_of(summary['ch_hydro'],'load_gwh',BASE)-1))}"
-        f" gegenüber dem Mittel – Spitzenlast durch Klimatisierung). Nach Monaten: "
-        f"{monthly_str(ch26m)} GWh.")
+        f" gegenüber dem Mittel; die Ursache des hohen Verbrauchs ist aus den Erzeugungsdaten nicht belegt). "
+        f"Nach Monaten: {monthly_str(ch26m)} GWh.")
     if fl_ch and CUR in index_by_year(fl_ch):
         cur_net = abs(v(fl, "ch", CUR, "net_import_gwh"))
         mean_net = abs(mean_of(fl_ch, "net_import_gwh", BASE))
@@ -223,21 +240,24 @@ def build(summary) -> str:
                 f"({pct(v(fl,'de',CUR,'net_as_pct_of_load'),1)} vom Verbrauch) gegenüber "
                 f"{num(v(fl,'de',2025,'net_import_gwh'))} GWh 2025 und "
                 f"{num(mean_of(de_fl,'net_import_gwh',[2023,2024]))} GWh 2023–2024: die hohe Wind- und "
-                f"Solarerzeugung deckte teilweise sowohl das Wasserkraft-Defizit als auch den Import.")
+                f"Solarerzeugung dämpfte den bilanziellen Druck, ersetzte das Wasserkraft-Defizit aber nicht "
+                f"physikalisch – Deutschland blieb Nettoimporteur.")
     at_fl = [r for r in summary.get("flows", []) if r["country"] == "AT"]
     if at_fl and CUR in index_by_year(at_fl):
-        txt += (f" Österreich wechselte auf {num(v(fl,'at',CUR,'net_import_gwh'),0)} GWh "
+        txt += (f" Österreich wechselte auf {num(v(fl,'at',CUR,'net_import_gwh'),0)} GWh Nettoimport "
                 f"({pct(v(fl,'at',CUR,'net_as_pct_of_load'),1)} vom Verbrauch; Mittel "
-                f"{num(mean_of(at_fl,'net_import_gwh',BASE),0)} GWh) – bei einem Wasserkraftanteil von nur "
-                f"{num(at26['hydro_share_of_load_pct'],0)}{THIN}% die physische Antwort auf die Frage, "
-                f"wohin das fehlende Speicherwasser geflossen ist.")
+                f"{num(mean_of(at_fl,'net_import_gwh',BASE),0)} GWh) – die energiewirtschaftliche Folge des "
+                f"geringeren Wasserkraftbeitrags: bei einem Anteil der natürlichen Wasserkraft von nur "
+                f"{num(at26['natural_share_of_load_pct'],0)}{THIN}% wurde das Defizit teilweise über Importe "
+                f"gedeckt.")
     items.append(txt)
 
     # ---- 5. Preise --------------------------------------------------------
     ch_at = v(pr, "ch", CUR, "price_mean") - v(pr, "at", CUR, "price_mean")
     ch_at_word = "über" if ch_at >= 0 else "unter"
     items.append(
-        f"<b>Die Preise bildeten die Trockenheit ab:</b> Day-ahead-Sommermittel 2026 – "
+        f"<b>Das Wasserkraftdefizit fiel mit höheren Day-ahead-Preisen und einer deutlich größeren "
+        f"Tagespreisspanne zusammen.</b> Day-ahead-Sommermittel 2026 – "
         f"{num(v(pr,'de',CUR,'price_mean'))} EUR/MWh in DE-LU ({pct(d100(pr,'de',CUR,'price_mean',2025))} "
         f"gegenüber 2025) und {num(v(pr,'ch',CUR,'price_mean'))} EUR/MWh in der Schweiz "
         f"({pct(d100(pr,'ch',CUR,'price_mean',2025))}). Die mittlere tägliche Tag/Nacht-Spread betrug in "

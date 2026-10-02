@@ -84,7 +84,7 @@ def main() -> None:
         data[c] = {
             "hydro": {k: series(hy, k) for k in
                       ["run_of_river_gwh", "reservoir_gwh", "pumped_gwh", "hydro_total_gwh",
-                       "natural_gwh",
+                       "natural_gwh", "natural_share_of_load_pct",
                        "hydro_share_of_load_pct", "load_gwh", "renewable_share_of_load_pct"]},
             "ps": {k: series(ps, k) for k in
                    ["ps_generation_gwh", "ps_pumping_gwh", "ps_net_gwh", "round_trip_eff_pct",
@@ -487,7 +487,7 @@ function table(el, rows, cols, label){
    rows.slice().sort((a,b)=> (a.country&&b.country&&a.country!==b.country)? a.country.localeCompare(b.country) : b.year-a.year).map(r=>'<tr class="'+(r.year===CUR?'cur':'')+'">'+
      cols.map((c,i)=>'<td>'+(c.raw||i===0?r[c.k]:fmt(r[c.k],c.d==null?1:c.d))+'</td>').join('')+'</tr>').join('');
 }
-const hydroCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'hydro_total_gwh',l:'Wasserkraft, GWh'},{k:'run_of_river_gwh',l:'Laufwasser'},{k:'reservoir_gwh',l:'Speicherwasser'},{k:'pumped_gwh',l:'Pumpspeicher'},{k:'load_gwh',l:'Verbrauch, GWh'},{k:'hydro_share_of_load_pct',l:'WK/Last %'},{k:'renewable_share_of_load_pct',l:'EE/Last %'},{k:'hydro_capacity_mw',l:'Leistung MW',d:0},{k:'hydro_flh',l:'Benutzungsstd.'},{k:'intervals',l:'n',raw:1},{k:'hydro_cov',l:'Abdeckung %',d:1}];
+const hydroCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'natural_gwh',l:'Natürliche WK, GWh'},{k:'hydro_total_gwh',l:'WK gesamt, GWh'},{k:'run_of_river_gwh',l:'Laufwasser'},{k:'reservoir_gwh',l:'Speicherwasser'},{k:'pumped_gwh',l:'Pumpspeicher'},{k:'load_gwh',l:'Verbrauch, GWh'},{k:'natural_share_of_load_pct',l:'natürl./Last %'},{k:'hydro_share_of_load_pct',l:'WK ges./Last %'},{k:'renewable_share_of_load_pct',l:'EE/Last %'},{k:'hydro_capacity_mw',l:'Leistung MW',d:0},{k:'hydro_flh',l:'Benutzungsstd.'},{k:'intervals',l:'n',raw:1},{k:'hydro_cov',l:'Abdeckung %',d:1}];
 table('tbl_hydro', ['de','at','ch'].flatMap(c=>D.hydro_rows[c]).sort((a,b)=>a.country.localeCompare(b.country)||b.year-a.year), hydroCols);
 const psCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'ps_generation_gwh',l:'Erzeugung'},{k:'ps_pumping_gwh',l:'Pumpstrom'},{k:'ps_net_gwh',l:'Netto'},{k:'round_trip_eff_pct',l:'Wirkungsgrad %'},{k:'ps_gen_full_load_hours',l:'Benutzungsstd.'},{k:'ps_peak_generation_mw',l:'Spitze Erzg. MW',d:0},{k:'ps_max_pumping_mw',l:'Spitze Pumpen MW',d:0},{k:'intervals_with_generation_pct',l:'Std. mit Erzg., %'},{k:'gen_hours_in_peak_8_20_pct',l:'Erzg. 8–20 Uhr %'},{k:'pump_hours_in_night_22_6_pct',l:'Pumpen 22–6 Uhr %'},{k:'price_mean_eur_mwh',l:'Preis Ø'},{k:'capture_spread_eur_mwh',l:'Spread'},{k:'da_arbitrage_value_meur',l:'Arbitrage, Mio.'},{k:'ps_capacity_mw',l:'Leistung MW',d:0},{k:'pump_share_midday_10_15_pct',l:'Pumpen 10–16 Uhr %'},{k:'gen_share_evening_17_23_pct',l:'Erzg. 17–24 Uhr %'},{k:'pump_at_negative_price_gwh',l:'Pumpen bei neg. Preis'},{k:'gen_share_of_price_top_decile_pct',l:'Erzg. oberes Dezil %'},{k:'days_with_both_modes_pct',l:'Tage mit beiden Modi %'},{k:'max_daily_generation_gwh',l:'max. Tageserzg. GWh'},{k:'reporting',l:'Bilanzierung'}];
 table('tbl_ps', ['de','at','ch'].flatMap(c=>D.ps_rows[c]), psCols);

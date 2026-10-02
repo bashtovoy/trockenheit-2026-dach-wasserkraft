@@ -112,12 +112,14 @@ def hydro_table(country: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             "hydro_total_gwh": gwh(total_hydro, ih),
             "natural_gwh": gwh(df["hydro_run_of_river"], ih) + gwh(df["hydro_water_reservoir"], ih),
             "load_gwh": gwh(load_mw, ih),
-            "wind_gwh": gwh(onshore(df), ih),
+            "wind_gwh": gwh(wind_total(df), ih),
+            "wind_onshore_gwh": gwh(onshore(df), ih),
             "solar_gwh": gwh(df["solar"], ih),
             "hydro_cov": coverage(total_hydro),
             "load_cov": coverage(load_mw),
         }
         row["hydro_share_of_load_pct"] = 100 * row["hydro_total_gwh"] / row["load_gwh"] if row["load_gwh"] else np.nan
+        row["natural_share_of_load_pct"] = 100 * row["natural_gwh"] / row["load_gwh"] if row["load_gwh"] else np.nan
         row["run_of_river_share_pct"] = 100 * row["run_of_river_gwh"] / row["hydro_total_gwh"]
         row["reservoir_share_pct"] = 100 * row["reservoir_gwh"] / row["hydro_total_gwh"]
         row["pumped_share_pct"] = 100 * row["pumped_gwh"] / row["hydro_total_gwh"]
