@@ -60,16 +60,20 @@ def build(summary) -> str:
     de_res_mean = mean_of(summary["de_hydro"], "reservoir_gwh", BASE)
     de_rank = sorted((r["hydro_total_gwh"] for r in summary["de_hydro"]), reverse=True).index(
         de26["hydro_total_gwh"]) + 1
+    de_ror_delta = 100*(de26['run_of_river_gwh']/de_ror_mean-1)
+    de_res_delta = 100*(de26['reservoir_gwh']/de_res_mean-1)
     items.append(
         f"<b>Deutschland: {num(de26['hydro_total_gwh'])} GWh Wasserkraft im Sommer, "
         f"{pct(100*(de26['hydro_total_gwh']/de_hyd_mean-1))} gegenüber dem Mittel 2017–2025</b> "
-        f"– Platz {de_rank} von zehn Jahren. Der Einbruch liegt bei den Laufwasserkraftwerken: "
-        f"{num(de26['run_of_river_gwh'])} GWh statt {num(de_ror_mean)} GWh im Mittel "
-        f"({pct(100*(de26['run_of_river_gwh']/de_ror_mean-1))}), der niedrigste Wert des gesamten "
-        f"Beobachtungsfensters und deutlich unter dem Dürrejahr 2018 "
-        f"({num(v(hy,'de',2018,'run_of_river_gwh'))} GWh). "
-        f"Speicherwasser liefert {num(de26['reservoir_gwh'])} GWh "
-        f"({pct(100*(de26['reservoir_gwh']/de_res_mean-1))}).")
+        f"– Platz {de_rank} von zehn Jahren. <i>Mengenmässig</i> liegt der Einbruch bei den "
+        f"Laufwasserkraftwerken: {num(de26['run_of_river_gwh'])} GWh statt {num(de_ror_mean)} GWh im Mittel "
+        f"({pct(de_ror_delta)}), der niedrigste Wert des gesamten Beobachtungsfensters und deutlich unter "
+        f"dem Dürrejahr 2018 ({num(v(hy,'de',2018,'run_of_river_gwh'))} GWh) – sie stellen mit Abstand die "
+        f"grösste Wasserkraftsparte. <i>Relativ</i> härter traf es dagegen das Speicherwasser: "
+        f"{num(de26['reservoir_gwh'])} GWh statt {num(de_res_mean)} GWh ({pct(de_res_delta)}); der "
+        f"prozentuale Rückgang ist grösser als beim Laufwasser, obwohl die absolute Menge klein bleibt. "
+        f"Man muss also zwischen dem dominanten Verlust in GWh (Laufwasser) und der tieferen prozentualen "
+        f"Senkung (Speicherwasser) unterscheiden.")
 
     # ---- 2. Verlauf innerhalb des Sommers ---------------------------------
     m26 = sorted((m for m in summary["de_monthly"] if m["year"] == CUR), key=lambda r: r["month"])
@@ -150,7 +154,10 @@ def build(summary) -> str:
         f"{num(reg[CUR])} GWh Wasserkraft gegenüber {num(reg_mean)} GWh im Mittel "
         f"({pct(100*(reg[CUR]/reg_mean-1))}) – es fehlen {num(reg_mean-reg[CUR])} GWh. Der eigentliche "
         f"Befund ist die Gleichzeitigkeit: in {low_share} der drei Länder – Österreich und die Schweiz – "
-        f"war der Wasserkraftanteil an der Last so tief wie nie im Jahrzehnt. Die Trockenheit war kein "
+        f"war der Wasserkraftanteil an der Last so tief wie nie im Jahrzehnt, und das auf einem Niveau, "
+        f"das trotzdem weit über Deutschland liegt: AT {num(hy['at'][CUR]['hydro_share_of_load_pct'],0)}{THIN}% "
+        f"und CH {num(hy['ch'][CUR]['hydro_share_of_load_pct'],0)}{THIN}% gegenüber nur "
+        f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% in DE. Die Trockenheit war kein "
         f"nationales, sondern ein alpines Ereignis. Am deutlichsten wird das beim steuerbaren Wasser – die "
         f"Speicherwasserkraft "
         f"der drei Länder zusammen lieferte nur {num(reg_res[CUR])} GWh statt {num(reg_res_mean)} GWh "
@@ -263,7 +270,12 @@ def build(summary) -> str:
 
     # ---- 8. Deutschland: Wirtschaftlichkeit ------------------------------
     items.append(
-        f"<b>Die Arbitrage-Ökonomie hat sich stark verbessert:</b> der mittlere Preis in "
+        f"<b>Die Arbitrage-Ökonomie: nicht das Preisniveau, sondern die Spread zählte.</b> Der "
+        f"Day-ahead-Mittelpreis 2026 ({num(v(pr,'de',CUR,'price_mean'))} EUR/MWh) lag klar unter dem "
+        f"Krisenjahr 2022 ({num(v(pr,'de',2022,'price_mean'))} EUR/MWh) und war der zweithöchste Wert der "
+        f"verfügbaren Jahre seit 2019 – das Wachstum der PSW-Erzeugung folgte also nicht dem "
+        f"absoluten Preisniveau, sondern der enormen Spreizung zwischen billigen "
+        f"Mittagsstunden (Solar-Angebot) und teuren Abendspitzen: der mittlere Preis in "
         f"Erzeugungsstunden übersteigt den in Pumpstunden um "
         f"{num(v(ps,'de',CUR,'capture_spread_eur_mwh'),1)} EUR/MWh (2019: "
         f"{num(v(ps,'de',2019,'capture_spread_eur_mwh'),1)}; 2025: "
