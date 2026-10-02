@@ -136,6 +136,12 @@ def main() -> None:
     html = TEMPLATE.replace("__DATA__", json.dumps(data, ensure_ascii=False))
     (OUT / "report.html").write_text(html, encoding="utf-8")
     print("wrote", OUT / "report.html")
+    # GitHub Pages copy: the report is self-contained, so mirror it to
+    # docs/index.html on every rebuild and a redeploy can never serve a stale page.
+    docs = ROOT / "docs"
+    if docs.is_dir():
+        (docs / "index.html").write_text(html, encoding="utf-8")
+        print("wrote", docs / "index.html")
     for c in COUNTRIES:
         print(c.upper(), json.dumps(findings[c], ensure_ascii=False))
 
