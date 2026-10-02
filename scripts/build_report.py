@@ -140,6 +140,7 @@ def main() -> None:
             for k in ("net_import_gwh", "net_as_pct_of_load", "import_gwh", "export_gwh")}
         for c, C in zip(COUNTRIES, (x.upper() for x in COUNTRIES))}
     data["narrative"] = build_narrative(summary)
+    data["weather"] = summary.get("weather")   # ERA5 correlation layer (optional)
 
     (OUT / "report_data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     html = TEMPLATE.replace("__DATA__", json.dumps(data, ensure_ascii=False))
@@ -258,10 +259,20 @@ li{margin:4px 0}
 </div>
 <div class="scroll" style="margin-top:12px"><table id="tbl_flow"></table></div>
 
-<h2>5. Fazit</h2>
+<h2>5. Meteorologischer Kontext – unabhängige Einordnung (ERA5)</h2>
+<div class="note">Die bisherigen Abschnitte messen Trockenheit <i>energiestatistisch</i> über die Wasserkrafterzeugung. Hier wird das Signal mit <b>unabhängigen Wetterdaten</b> abgeglichen: ERA5-Tageswerte (2&nbsp;m-<b>Temperatur</b>, <b>Niederschlag</b>, <b>Globstrahlung</b>) über ein Raster repräsentativer, alpin gewichteter Zellen je Land – Quelle <b>open-meteo.com / Copernicus CDS</b>, nicht energy-charts. Es ist eine <b>explorative Korrelation, kein Kausalnachweis</b>; die Jahresreihe umfasst nur n=10 Sommer.</div>
+<div class="grid">
+  <div class="card"><h3>Sommerniederschlag vs. natürliche Wasserkraft (je % des Ländermittels 2017–26)</h3><div class="cbody"><canvas id="wx_scatter"></canvas></div></div>
+  <div class="card" style="display:block"><h3>Kernbefund</h3><div id="wx_takeaway" class="note" style="margin:0"></div></div>
+</div>
+<h3>Korrelationen r mit der natürlichen Wasserkraft</h3>
+<div class="scroll"><table id="tbl_wx"></table></div>
+
+
+<h2>6. Fazit</h2>
 <div class="card" id="narrative"></div>
 
-<h2>6. Tabellen</h2>
+<h2>7. Tabellen</h2>
 <h3>Wasserkraft nach Jahren</h3>
 <div class="scroll"><table id="tbl_hydro"></table></div>
 <h3>Pumpspeicher nach Jahren</h3>
@@ -494,6 +505,60 @@ const psCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'ps_generation
 table('tbl_ps', ['de','at','ch'].flatMap(c=>D.ps_rows[c]), psCols);
 const priceCols=[{k:'country',l:'Gebotszone'},{k:'year',l:'Jahr',raw:1},{k:'price_mean',l:'Mittel'},{k:'price_median',l:'Median'},{k:'price_min',l:'Min'},{k:'price_max',l:'Max'},{k:'daily_spread_mean',l:'Spread/Tag'},{k:'daily_spread_p90',l:'Spread p90'},{k:'neg_hours_pct',l:'neg. Stunden %'}];
 table('tbl_price', D.price_rows, priceCols);
+
+// ---- §5 Meteorologischer Kontext – ERA5 Korrelation ----
+if(D.weather){
+  const wxNames={de:'Deutschland',at:'Österreich',ch:'Schweiz'};
+  const wxC={de:C.de,at:C.at,ch:C.ch};
+  // Scatter: Niederschlag vs. natürliche WK (je % des Ländermittels)
+  const wxDs=['de','at','ch'].map(c=>{
+    const r=D.weather.annual_corr[c].p.r;
+    return{label:wxNames[c]+' (r='+(r>=0?'+':'')+r.toFixed(2)+')',
+      data:D.weather.scatter[c].map(p=>({x:p.x,y:p.y})),
+      backgroundColor:wxC[c],borderColor:wxC[c],pointRadius:5,pointHoverRadius:7};
+  });
+  new Chart(document.getElementById('wx_scatter'),{type:'scatter',data:{datasets:wxDs},
+    options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+      tooltip:{callbacks:{label:function(ctx){
+        const pts=D.weather.scatter[['de','at','ch'][ctx.datasetIndex]];
+        const pt=pts[ctx.dataIndex];
+        return(pt?'Jahr '+pt.year:'')+': Niederschlag '+ctx.parsed.x.toFixed(1)+' %, WK '+ctx.parsed.y.toFixed(1)+' %';
+      }}}},
+      scales:{x:{title:{display:true,text:'Sommerniederschlag, % des Ländermittels 2017–26'},grid:{color:'#e6e6e6'}},
+              y:{title:{display:true,text:'Natürliche Wasserkraft, % des Ländermittels 2017–26'},grid:{color:'#e6e6e6'}}}}});
+
+  // Korrelations-Tabelle r/p
+  const varLabels={t:'2 m-Temperatur',p:'Niederschlag',rad:'Globstrahlung',spring_p:'Frühlings-N (Mär–Mai) → Sommer-WK'};
+  const stars=p=>{if(p==null||isNaN(p))return'';if(p<0.001)return' ***';if(p<0.01)return' **';if(p<0.05)return' *';return''};
+  let wxH='<thead><tr><th>Land</th><th>Wettervariable</th><th>Korn</th><th>r</th><th>p</th><th>n</th></tr></thead><tbody>';
+  for(const c of['de','at','ch']){
+    const a=D.weather.annual_corr[c],m=D.weather.monthly_corr[c];
+    for(const v of['t','p','rad','spring_p']){
+      if(!a[v]||isNaN(a[v].r))continue;
+      wxH+='<tr><td>'+wxNames[c]+'</td><td>'+varLabels[v]+'</td><td>Jährlich</td><td>'+(a[v].r>=0?'+':'')+a[v].r.toFixed(2)+'</td><td>'+(a[v].p<0.001?'<0,001':a[v].p.toFixed(3).replace('.',',')) +stars(a[v].p)+'</td><td>'+a[v].n+'</td></tr>';}
+    for(const v of['t','p','rad']){
+      if(!m[v]||isNaN(m[v].r))continue;
+      wxH+='<tr><td>'+wxNames[c]+'</td><td>'+varLabels[v]+'</td><td>Monatsanomalie</td><td>'+(m[v].r>=0?'+':'')+m[v].r.toFixed(2)+'</td><td>'+(m[v].p<0.001?'<0,001':m[v].p.toFixed(3).replace('.',','))+stars(m[v].p)+'</td><td>'+m[v].n+'</td></tr>';}
+  }
+  wxH+='</tbody>';
+  document.getElementById('tbl_wx').innerHTML=wxH;
+
+  // Kernbefund-Text
+  const dR=D.weather.annual_corr.de,aR=D.weather.annual_corr.at,cR=D.weather.annual_corr.ch;
+  document.getElementById('wx_takeaway').innerHTML=
+    '<b>Zusammenfassung:</b> Die explorative Korrelation bestätigt den erwarteten physikalischen Zusammenhang: '+
+    'In <b>Deutschland</b> und <b>Österreich</b> kovariiert die natürliche Wasserkraft signifikant mit allen drei Wettervariablen '+
+    '(DE: Temperatur r='+dR.t.r.toFixed(2)+', Niederschlag r='+dR.p.r.toFixed(2)+', Strahlung r='+dR.rad.r.toFixed(2)+ '; alle p&nbsp;&lt;&nbsp;0,05). '+
+    'Die <b>Schweiz</b> zeigt im selben Sommer schwächere Gleichzeitigkeit (r<sub>nat</sub>&nbsp;=&nbsp;'+cR.p.r.toFixed(2)+', p&gt;0,05 – Speicher-Pufferung), '+
+    'aber der <b>Frühlingsniederschlag</b> als Vorlaufsignal erreicht r&nbsp;=&nbsp;'+cR.spring_p.r.toFixed(2)+' (p&nbsp;=&nbsp;'+cR.spring_p.p.toFixed(3)+'). '+
+    'Monatsanomalien (n&nbsp;=&nbsp;30) bestätigen das DE/AT-Muster; für CH bleibt die Korrelation auf diesem Korn nicht signifikant.';
+}else{
+  const wxSection=document.getElementById('wx_scatter');
+  if(wxSection){const card=wxSection.closest('.card');if(card)card.parentElement.remove();}
+  const tw=document.getElementById('tbl_wx');if(tw&&tw.closest('.scroll'))tw.closest('.scroll').remove();
+  const tt=document.getElementById('wx_takeaway');if(tt)tt.closest('.card').remove();
+  const h2s=document.querySelectorAll('h2');h2s.forEach(h=>{if(h.textContent.includes('Meteorologischer')){let n=h.nextElementSibling;while(n&&!n.matches('h2')){const r=n;n=n.nextElementSibling;r.remove()}h.remove()}});
+}
 </script></body></html>
 """
 

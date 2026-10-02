@@ -516,6 +516,16 @@ def main() -> None:
         flows.to_csv(OUT / "flows_summer.csv", index=False)
     summary["flows"] = flows.to_dict(orient="records") if not flows.empty else []
 
+    # Meteorological correlation layer (independent ERA5 data via open-meteo.com).
+    # Requires data/raw/weather_*.json.gz (fetch_weather.py); skipped if absent.
+    if any((RAW / f"weather_{c}_2017.json.gz").exists() for c in COUNTRIES):
+        try:
+            from weather_analysis import compute as compute_weather
+            summary["weather"] = compute_weather(summary)
+            print("weather correlation block computed")
+        except Exception as exc:  # pragma: no cover
+            print("weather block skipped:", exc)
+
     with open(OUT / "summary.json", "w", encoding="utf-8") as fh:
         json.dump(summary, fh, ensure_ascii=False, indent=1, default=float)
     print("wrote", OUT / "summary.json")

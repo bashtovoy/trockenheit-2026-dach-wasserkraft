@@ -6,6 +6,11 @@ Vergleich zu 2017–2025. Ziel ist ein einheitliches Bild des alpinen Wasserkraf
 Pumpspeichersystems über alle drei Länder.
 
 Datenbasis: [energy-charts.info API v2](https://api.energy-charts.info/) (Fraunhofer ISE), Lizenz **CC BY 4.0**.
+Unabhängige Wetterdaten für Abschnitt 5: [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)
+mit dem Reanalyse-Datensatz **ERA5** (Copernicus Climate Change Service, C3S) – Tageswerte für
+2-m-Temperatur, Niederschlag und Kurzwellenstrahlung. ERA5 wird vom ECMWF/C3S bereitgestellt und ist
+frei unter einer Namensnennungs-Lizenz nutzbar; die hier verwendeten Werte werden über Open-Meteo bezogen
+(kein API-Schlüssel erforderlich).
 
 **Trockenheits-Indikator (energiestatistisch):** die *natürliche Wasserkraft* = Laufwasser +
 Speicherwasser. Pumpspeicher (PSW) hängen nicht vom Abfluss ab – sie sind ein Speicher, der zuerst
@@ -31,7 +36,7 @@ Durchlauf kann daher leicht abweichende Werte liefern.
 
 ## Ergebnisse
 
-Interaktiver Bericht: [`output/report.html`](output/report.html) – 26 Diagramme (Chart.js) und
+Interaktiver Bericht: [`output/report.html`](output/report.html) – 27 Diagramme (Chart.js) und
 vollständige Jahrestabellen für alle drei Länder. Alle Zahlen im Abschnitt „Fazit“ werden aus den
 Daten generiert und können nicht von den Tabellen abweichen.
 
@@ -64,13 +69,40 @@ Wichtigste Befunde:
   Sommerzyklus ≈ 345 Mio. €. Derselbe Abendtrend in Österreich (50 % → 74 %) und der Schweiz (43 % → 58 %).
 * **Preise**: DE-LU 114,0 €/MWh, AT 124,2 €/MWh, CH 119,6 €/MWh (alle deutlich über 2025). Die 2018
   getrennten Preiszonen DE-LU und AT notieren wieder auseinander (AT +10,2 €/MWh über DE-LU).
+* **Meteorologischer Kontext (Abschnitt 5, ERA5-unabhängig):** Die explorative Korrelation zwischen
+  unabhängigen Wetterdaten und der natürlichen Wasserkraft bestätigt den erwarteten physikalischen
+  Zusammenhang. Über die zehn Sommer (n = 10) kovariiert die natürliche Wasserkraft in **Deutschland**
+  und **Österreich** signifikant mit allen drei Variablen (DE: Temperatur r = −0,74, Niederschlag
+  r = +0,74, Globstrahlung r = −0,69; jeweils p < 0,05). Die **Schweiz** zeigt im selben Sommer eine
+  nur schwache Gleichzeitigkeit (Niederschlag r = +0,17, p > 0,05 – konsistent mit der starken
+  Speicher-Pufferung), aber der **Frühlingsniederschlag** (Mär–Mai) als Vorlaufsignal erreicht
+  r = +0,70 (p = 0,024). Monatsanomalien (n = 30, binnen-monthlich klimate bereinigt) bestätigen das
+  DE/AT-Muster. Es ist eine **Korrelation, kein Kausalnachweis**, bei kleinem Stichprobenumfang.
+
+## Methode des Wetter-Blocks (Abschnitt 5)
+
+* **Raster statt Schwerpunkt:** Pro Land wird ein Raster repräsentativer, **alpin gewichteter** Zellen
+  (dort läuft die Wasserkraft) definiert; die Tageswerte aller Zellen werden pro Land gemittelt.
+* **Zwei Korrelations-Körner:** (1) **jährlich** über die zehn Sommer (Rohwerte, n = 10);
+  (2) **monatlich** als **Binnen-Monats-Anomalie** – Wert minus Klimatologie derselben Land-Monat-Zelle –,
+  damit der saisonale Gang (Juni > August) nicht als Korrelation durchgeht (n ≈ 30).
+* **Vorlaufsignal:** Frühlingsniederschlag (Mär–Mai) → Sommer-Wasserkraft, getrennt ausgewiesen.
+* **Signifikanz:** Pearson-r mit zweiseitigem p-Wert über die Student-t-Verteilung (Freiheitsgrad
+  n − 2), ohne scipy – die reguläre unvollständige Beta wird per Kettenbruch (Lentz) ausgewertet.
+* **Streudiagramm-Achsen:** beide Achsen als **% des Ländermittels 2017–26**, damit die drei Länder
+  auf einer gemeinsamen, vergleichbaren Achse liegen.
+* **Skript:** `scripts/fetch_weather.py` (Abruf + gzip-Cache in `data/raw/`),
+  `scripts/weather_analysis.py` (Kennzahlen → `summary["weather"]`, von `analyze.py` automatisch
+  aufgerufen, wenn Wetter-Cache vorhanden ist).
 
 ## Struktur
 
 ```
 scripts/fetch_data.py     Abruf aus der API (fortsetzbarer gzip-Cache in data/raw, HTTP-429-Behandlung)
 scripts/fetch_flows.py    ergänzender Abruf der Grenzüberschreitungsflüsse (/v2/cbpf)
-scripts/analyze.py        Kennzahlen → CSV in output/ + summary.json
+scripts/fetch_weather.py  ERA5-Tageswetter (Open-Meteo Archive) über alpine Rasterzellen, gzip-Cache
+scripts/analyze.py        Kennzahlen → CSV in output/ + summary.json (ruft weather_analysis.py auf)
+scripts/weather_analysis.py  Korrelation Wetter × Wasserkraft → summary["weather"]
 scripts/findings.py       automatisch generiertes „Fazit“ (Zahlen aus summary.json)
 scripts/build_report.py   Zusammenstellung von output/report.html
 data/raw/                 Cache der API-Antworten (nicht im Repository, wird vom Skript neu erzeugt)
@@ -87,6 +119,9 @@ python3 scripts/fetch_data.py --years 2017-2026 --sleep 15
 
 # 2. Grenzüberschreitende Flüsse (optional, für Abschnitt 4)
 python3 scripts/fetch_flows.py 2017-2026
+
+# 2b. Unabhängiges Wetter ERA5 (optional, für Abschnitt 5) – Open-Meteo, kein Schlüssel
+python3 scripts/fetch_weather.py
 
 # 3. Berechnung und Bericht
 python3 scripts/analyze.py
@@ -120,9 +155,19 @@ der Cache in `data/raw/` erlaubt Abbruch und Fortsetzung ohne erneuten Download.
   tatsächliche kommerzielle Rendite. Die 15-Minuten-Erzeugung wird dabei dem nächstliegenden
   Stundenpreis zugeordnet; die Bruttowerte sind richtungsgebend, nicht auf die letzte Dezimalstelle
   reproduzierbar.
+* **Wetterkorrelation (Abschnitt 5):** ERA5 ist eine Reanalyse mit ca. 25–31 km Rasterauflösung; die
+  alpin gewichteten Zellen sind eine Näherung für das reale Einzugsgebiet der Kraftwerke. Der
+  Jahres-Korrelationsumfang ist klein (n = 10), daher werden r-Werte immer mit p-Wert und n
+  ausgewiesen und die Analyse ist **explorativ** – ein statistischer Zusammenhang, kein Kausalbeweis.
+  Es wird kein expliziter Abfluss-/Hydrologiemodell gerechnet, sondern die Korrelation zwischen
+  Wettervariablen und der beobachteten Erzeugung.
 
 ## Datenlizenz
 
 Die Energie- und Preisreihen stammen von ihren jeweiligen Quellen (ENTSO-E, SMARD, APG, Swissgrid,
 EEX u. a.) und werden von Fraunhofer ISE über energy-charts.info unter CC BY 4.0 veröffentlicht. Bei
 Nutzung: Quellenangabe `energy-charts.info — Fraunhofer ISE`.
+
+Die Wetterdaten (Abschnitt 5) stammen aus dem Copernicus-ERA5-Reanalyse-Datensatz (ECMWF /
+Copernicus Climate Change Service), bezogen über die Open-Meteo Historical Weather API. Bei Nutzung:
+Quellenangabe `ERA5 (Copernicus Climate Change Service) via open-meteo.com`.
