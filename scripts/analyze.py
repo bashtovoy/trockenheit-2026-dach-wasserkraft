@@ -110,6 +110,7 @@ def hydro_table(country: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             "reservoir_gwh": gwh(df["hydro_water_reservoir"], ih),
             "pumped_gwh": gwh(df["hydro_pumped_storage"], ih),
             "hydro_total_gwh": gwh(total_hydro, ih),
+            "natural_gwh": gwh(df["hydro_run_of_river"], ih) + gwh(df["hydro_water_reservoir"], ih),
             "load_gwh": gwh(load_mw, ih),
             "wind_gwh": gwh(onshore(df), ih),
             "solar_gwh": gwh(df["solar"], ih),
@@ -143,6 +144,7 @@ def hydro_table(country: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
                 "run_of_river_gwh": float(mr.get(mon, np.nan)),
                 "reservoir_gwh": float(ms.get(mon, np.nan)),
                 "pumped_gwh": float(mp.get(mon, np.nan)),
+                "natural_gwh": float(mr.get(mon, 0) + ms.get(mon, 0)),
             })
 
         # hourly profile (local hour of day)
@@ -372,6 +374,7 @@ def daily_series(country: str) -> pd.DataFrame:
             d["solar"] = df["solar"].resample("1D").sum() * ih / 1000.0
         d["wind"] = wind_total(df).resample("1D").sum() * ih / 1000.0
         d["hydro"] = d[["ror", "res", "ps_gen"]].sum(axis=1, min_count=1)
+        d["nat"] = d[["ror", "res"]].sum(axis=1, min_count=1)
         px = price_frame(country, year)
         if px is not None:
             px = px[(px.index >= f"{year}-06-01") & (px.index < f"{year}-09-01")]

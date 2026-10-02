@@ -59,9 +59,14 @@ def main() -> None:
         prev_rr = mean_of(hy, "run_of_river_gwh", BASE)
         prev_res = mean_of(hy, "reservoir_gwh", BASE)
         prev_ps = mean_of(hy, "pumped_gwh", BASE)
+        prev_nat = mean_of(hy, "natural_gwh", BASE)
         findings[c] = {
             "hydro_total": rnd(cur.get("hydro_total_gwh")),
             "hydro_mean_prev": rnd(prev),
+            "natural": rnd(cur.get("natural_gwh")),
+            "natural_mean_prev": rnd(prev_nat),
+            "nat_delta_pct": rnd(100 * (cur["natural_gwh"] / prev_nat - 1)) if prev_nat and cur.get("natural_gwh") else None,
+            "nat_rank": None,
             "delta_pct": rnd(100 * (cur["hydro_total_gwh"] / prev - 1)) if prev and cur.get("hydro_total_gwh") else None,
             "ror_delta_pct": rnd(100 * (cur["run_of_river_gwh"] / prev_rr - 1)) if prev_rr and cur.get("run_of_river_gwh") else None,
             "res_delta_pct": rnd(100 * (cur["reservoir_gwh"] / prev_res - 1)) if prev_res and cur.get("reservoir_gwh") else None,
@@ -73,9 +78,13 @@ def main() -> None:
         totals = sorted([r["hydro_total_gwh"] for r in hy], reverse=True)
         if cur.get("hydro_total_gwh") is not None:
             findings[c]["rank"] = totals.index(cur["hydro_total_gwh"]) + 1
+        nats = sorted([r["natural_gwh"] for r in hy], reverse=True)
+        if cur.get("natural_gwh") is not None:
+            findings[c]["nat_rank"] = nats.index(cur["natural_gwh"]) + 1
         data[c] = {
             "hydro": {k: series(hy, k) for k in
                       ["run_of_river_gwh", "reservoir_gwh", "pumped_gwh", "hydro_total_gwh",
+                       "natural_gwh",
                        "hydro_share_of_load_pct", "load_gwh", "renewable_share_of_load_pct"]},
             "ps": {k: series(ps, k) for k in
                    ["ps_generation_gwh", "ps_pumping_gwh", "ps_net_gwh", "round_trip_eff_pct",
@@ -101,7 +110,7 @@ def main() -> None:
         for rec in daily:
             d = rec["date"][:10]
             y, md = d[:4], d[5:]
-            piv.setdefault(md, {})[y] = {k: rnd(rec.get(k), 2) for k in ("hydro", "ror", "res", "ps_gen", "ps_pump", "price_mean", "price_spread")}
+            piv.setdefault(md, {})[y] = {k: rnd(rec.get(k), 2) for k in ("hydro", "ror", "res", "nat", "ps_gen", "ps_pump", "price_mean", "price_spread")}
         data[c]["daily"] = dict(sorted(piv.items()))
 
         prof = summary.get(f"{c}_ps_hourly", [])
@@ -185,28 +194,33 @@ li{margin:4px 0}
 </style></head><body>
 <header>
 <h1>Wasserkraft und Pumpspeicherbetrieb im DACH-Raum – Deutschland, Österreich, Schweiz</h1>
-<p class="sub">Alpenraum / DACH · Sommersaison 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025 · Quelle: <b>energy-charts.info API v2</b> (Fraunhofer ISE, CC BY 4.0) · Einheiten: GWh Erzeugung, Preise: Day-ahead in EUR/MWh</p>
+<p class="sub">Alpenraum / DACH · Sommersaison 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025 · Dürre-Indikator: <b>natürliche Wasserkraft (Laufwasser + Speicherwasser)</b>, Pumpspeicher getrennt · Quelle: <b>energy-charts.info API v2</b> (Fraunhofer ISE, CC BY 4.0) · Einheiten: GWh Erzeugung, Preise: Day-ahead in EUR/MWh</p>
 </header>
 <main>
 <div class="kpis" id="kpis"></div>
 <div class="note" id="caveats"></div>
 
-<h2>1. Wasserkraft im Sommer: Struktur und Dynamik</h2>
+<h2>1. Natürliche Wasserkraft – der eigentliche Dürre-Indikator</h2>
+<div class="note">Pumpspeicherkraftwerke sind kein vom Zufluss abhängiger Erzeuger: Sie entnehmen dem Netz Strom und speisen ihn wirkungsgradbedingt wieder ein. Für das <b>Trockenheitssignal</b> zählt daher die <b>natürliche Wasserkraft = Laufwasser + Speicherwasser</b>; die Pumpspeicher werden in Abschnitt&nbsp;3 getrennt behandelt. <span class="tag">Laufwasser</span> <span class="tag">Speicherwasser</span> = natürlich &nbsp;·&nbsp; <span class="tag">Pumpspeicher</span> = Speicher.</div>
+<div class="grid">
+  <div class="card"><h3>Natürliche Wasserkraft (Laufwasser + Speicherwasser) je Sommer, GWh</h3><div class="cbody"><canvas id="nat_yearly"></canvas></div></div>
+  <div class="card"><h3>Was die PSW-Menge verdeckt: Abweichung natürlich vs. gesamt, %</h3><div class="cbody"><canvas id="nat_mask"></canvas></div></div>
+  <div class="card"><h3>Anteil der natürlichen Wasserkraft am Verbrauch (Last), %</h3><div class="cbody"><canvas id="share"></canvas></div></div>
+</div>
 <div class="grid">
   <div class="card"><h3>Deutschland: Erzeugung nach Art, GWh (Summe Juni–August)</h3><div class="cbody"><canvas id="de_stack"></canvas></div></div>
   <div class="card"><h3>Österreich: Erzeugung nach Art, GWh (Summe Juni–August)</h3><div class="cbody"><canvas id="at_stack"></canvas></div></div>
   <div class="card"><h3>Schweiz: Erzeugung nach Art, GWh (Summe Juni–August)</h3><div class="cbody"><canvas id="ch_stack"></canvas></div></div>
 </div>
 <div class="grid">
-  <div class="card"><h3>Anteil der Wasserkraft am Verbrauch (Last), %</h3><div class="cbody"><canvas id="share"></canvas></div></div>
-  <div class="card"><h3>Abweichung Sommer 2026 vom Mittel 2017–2025, %</h3><div class="cbody"><canvas id="delta"></canvas></div></div>
+  <div class="card"><h3>Abweichung Sommer 2026 vom Mittel 2017–2025 nach Sparte, %</h3><div class="cbody"><canvas id="delta"></canvas></div></div>
 </div>
 
 <h2>2. Monats- und Tagesverlauf</h2>
 <div class="grid">
-  <div class="card"><h3>Deutschland: Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><div class="cbody"><canvas id="de_daily"></canvas></div></div>
-  <div class="card"><h3>Österreich: Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><div class="cbody"><canvas id="at_daily"></canvas></div></div>
-  <div class="card"><h3>Schweiz: Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><div class="cbody"><canvas id="ch_daily"></canvas></div></div>
+  <div class="card"><h3>Deutschland: natürliche Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><div class="cbody"><canvas id="de_daily"></canvas></div></div>
+  <div class="card"><h3>Österreich: natürliche Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><div class="cbody"><canvas id="at_daily"></canvas></div></div>
+  <div class="card"><h3>Schweiz: natürliche Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><div class="cbody"><canvas id="ch_daily"></canvas></div></div>
 </div>
 <div class="grid">
   <div class="card"><h3>Deutschland: Laufwasser vs. Speicherwasser vs. Pumpspeicher je Monat</h3><div class="cbody"><canvas id="de_split"></canvas></div></div>
@@ -295,24 +309,48 @@ function barStack(cc, id){
 }
 barStack('de','de_stack'); barStack('at','at_stack'); barStack('ch','ch_stack');
 
-new Chart(document.getElementById('share'),{type:'line',data:{labels:Y,datasets:[
-  {label:'DE',data:D.de.hydro.hydro_share_of_load_pct,borderColor:C.de,backgroundColor:'transparent',tension:.25},
-  {label:'AT',data:D.at.hydro.hydro_share_of_load_pct,borderColor:C.at,backgroundColor:'transparent',tension:.25},
-  {label:'CH',data:D.ch.hydro.hydro_share_of_load_pct,borderColor:C.ch,backgroundColor:'transparent',tension:.25}]},
-  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'% des Verbrauchs'}}}}});
-
+// ---- DACH natural/total/ps aggregates ----
+const iCUR=Y.indexOf(CUR);
+function dachAgg(key){return Y.map((_,i)=>[D.de.hydro[key][i],D.at.hydro[key][i],D.ch.hydro[key][i]].reduce((a,b)=>a+(b||0),0))}
+function meanPrevA(a){const p=a.filter((_,i)=>i<iCUR);return p.reduce((x,y)=>x+y,0)/p.length}
+function dachDelta(key){const a=dachAgg(key);return +(100*(a[iCUR]/meanPrevA(a)-1)).toFixed(1)}
+const natY=dachAgg('natural_gwh');
 const dDe=D.findings.de, dAt=D.findings.at, dCh=D.findings.ch;
-new Chart(document.getElementById('delta'),{type:'bar',data:{labels:['Wasserkraft gesamt','Laufwasser','Speicherwasser','Pumpspeicher'],datasets:[
-  {label:'DE 2026 ggü. 2017–25',data:[dDe.delta_pct,dDe.ror_delta_pct,dDe.res_delta_pct,dDe.ps_delta_pct],backgroundColor:C.de},
-  {label:'AT 2026 ggü. 2017–25',data:[dAt.delta_pct,dAt.ror_delta_pct,dAt.res_delta_pct,dAt.ps_delta_pct],backgroundColor:C.at},
-  {label:'CH 2026 ggü. 2017–25',data:[dCh.delta_pct,dCh.ror_delta_pct,dCh.res_delta_pct,dCh.ps_delta_pct],backgroundColor:C.ch}]},
-  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'% Abweichung'}}}}});
 
-new Chart(document.getElementById('de_daily'),{type:'line',data:{labels:dailyLabels('de'),datasets:dailySmooth('de','hydro',[2026,2025,2024,2023,2018])},
+// ---- Headline: natuerliche Wasserkraft je Jahr (2026 betont) ----
+function natLine(cc,label,col){const arr=D[cc].hydro.natural_gwh;return{label,data:arr,borderColor:col,backgroundColor:'transparent',tension:.25,borderWidth:2,
+  pointRadius:arr.map((_,i)=>i===iCUR?5:2),pointHoverRadius:6,pointBackgroundColor:arr.map((_,i)=>i===iCUR?col:'transparent'),pointBorderColor:col}}
+new Chart(document.getElementById('nat_yearly'),{type:'line',data:{labels:Y,datasets:[
+  natLine('de','DE natürlich',C.de),natLine('at','AT natürlich',C.at),natLine('ch','CH natürlich',C.ch),
+  {label:'DACH (Summe)',data:natY,borderColor:C.hydro,borderDash:[6,3],backgroundColor:'transparent',tension:.25,borderWidth:1.6,pointRadius:0}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'GWh (Laufwasser + Speicherwasser)'}}}}});
+
+// ---- Was die PSW-Menge verdeckt: natuerlich vs. gesamt vs. PSW ----
+new Chart(document.getElementById('nat_mask'),{type:'bar',data:{labels:['DE','AT','CH','DACH'],datasets:[
+  {label:'Natürliche WK (o. PSW)',data:[dDe.nat_delta_pct,dAt.nat_delta_pct,dCh.nat_delta_pct,dachDelta('natural_gwh')],backgroundColor:C.hydro},
+  {label:'Wasserkraft gesamt (m. PSW)',data:[dDe.delta_pct,dAt.delta_pct,dCh.delta_pct,dachDelta('hydro_total_gwh')],backgroundColor:'#9c9999'},
+  {label:'Pumpspeicher',data:[dDe.ps_delta_pct,dAt.ps_delta_pct,dCh.ps_delta_pct,dachDelta('pumped_gwh')],backgroundColor:C.ps}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'% ggü. Mittel 2017–2025'}}}}});
+
+// ---- Natuerliche Wasserkraft als Anteil an der Last ----
+function natShare(cc){const n=D[cc].hydro.natural_gwh,l=D[cc].hydro.load_gwh;return n.map((v,i)=>(v!=null&&l[i])?+(v/l[i]*100).toFixed(2):null)}
+new Chart(document.getElementById('share'),{type:'line',data:{labels:Y,datasets:[
+  {label:'DE',data:natShare('de'),borderColor:C.de,backgroundColor:'transparent',tension:.25},
+  {label:'AT',data:natShare('at'),borderColor:C.at,backgroundColor:'transparent',tension:.25},
+  {label:'CH',data:natShare('ch'),borderColor:C.ch,backgroundColor:'transparent',tension:.25}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'% des Verbrauchs'}}}}});
+
+new Chart(document.getElementById('delta'),{type:'bar',data:{labels:['Natürliche WK (o. PSW)','Wasserkraft gesamt','Laufwasser','Speicherwasser','Pumpspeicher'],datasets:[
+  {label:'DE 2026 ggü. 2017–25',data:[dDe.nat_delta_pct,dDe.delta_pct,dDe.ror_delta_pct,dDe.res_delta_pct,dDe.ps_delta_pct],backgroundColor:C.de},
+  {label:'AT 2026 ggü. 2017–25',data:[dAt.nat_delta_pct,dAt.delta_pct,dAt.ror_delta_pct,dAt.res_delta_pct,dAt.ps_delta_pct],backgroundColor:C.at},
+  {label:'CH 2026 ggü. 2017–25',data:[dCh.nat_delta_pct,dCh.delta_pct,dCh.ror_delta_pct,dCh.res_delta_pct,dCh.ps_delta_pct],backgroundColor:C.ch}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'% Abweichung'}}}}});
+
+new Chart(document.getElementById('de_daily'),{type:'line',data:{labels:dailyLabels('de'),datasets:dailySmooth('de','nat',[2026,2025,2024,2023,2018])},
   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12,autoSkip:true},grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
-new Chart(document.getElementById('at_daily'),{type:'line',data:{labels:dailyLabels('at'),datasets:dailySmooth('at','hydro',[2026,2025,2024,2023,2018])},
+new Chart(document.getElementById('at_daily'),{type:'line',data:{labels:dailyLabels('at'),datasets:dailySmooth('at','nat',[2026,2025,2024,2023,2018])},
   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12,autoSkip:true},grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
-new Chart(document.getElementById('ch_daily'),{type:'line',data:{labels:dailyLabels('ch'),datasets:dailySmooth('ch','hydro',[2026,2025,2024,2023,2018])},
+new Chart(document.getElementById('ch_daily'),{type:'line',data:{labels:dailyLabels('ch'),datasets:dailySmooth('ch','nat',[2026,2025,2024,2023,2018])},
   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12,autoSkip:true},grid:{display:false}},y:{grid:{color:'#e6e6e6'},title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
 
 function splitChart(cc,id){
@@ -423,19 +461,20 @@ if(D.flow_rows && D.flow_rows.length){
 function kpi(label,val,delta,unit){
   let d='';if(delta!=null){const up=delta>=0;d=`<div class="d ${up?'up':'down'}">${up?'▲':'▼'} ${fmt(Math.abs(delta),1)}% ggü. 2017–25</div>`}
   return `<div class="kpi"><div class="l">${label}</div><div class="v">${fmt(val,unit==='%'?1:0)}${unit?' '+unit:''}</div>${d}</div>`}
+const dachNatCur=natY[iCUR], dachNatMean=meanPrevA(natY);
 document.getElementById('kpis').innerHTML=[
- kpi('DE · Wasserkraft Sommer',dDe.hydro_total,dDe.delta_pct,'GWh'),
- kpi('AT · Wasserkraft Sommer',dAt.hydro_total,dAt.delta_pct,'GWh'),
- kpi('CH · Wasserkraft Sommer',dCh.hydro_total,dCh.delta_pct,'GWh'),
- kpi('DE · WK-Anteil an Last',dDe.share_of_load,null,'%'),
- kpi('AT · WK-Anteil an Last',dAt.share_of_load,null,'%'),
- kpi('CH · WK-Anteil an Last',dCh.share_of_load,null,'%'),
- kpi('AT · PSW-Erzeugung',byrow('at','ps_generation_gwh'),dAt.ps_delta_pct,'GWh'),
+ kpi('DACH · natürliche WK',Math.round(dachNatCur),+(100*(dachNatCur/dachNatMean-1)).toFixed(1),'GWh'),
+ kpi('DE · natürliche WK (o. PSW)',dDe.natural,dDe.nat_delta_pct,'GWh'),
+ kpi('AT · natürliche WK (o. PSW)',dAt.natural,dAt.nat_delta_pct,'GWh'),
+ kpi('CH · natürliche WK (o. PSW)',dCh.natural,dCh.nat_delta_pct,'GWh'),
+ kpi('DE · WK gesamt (m. PSW)',dDe.hydro_total,dDe.delta_pct,'GWh'),
  kpi('DE · PSW-Erzeugung',byrow('de','ps_generation_gwh'),dDe.ps_delta_pct,'GWh'),
+ kpi('AT · PSW-Erzeugung',byrow('at','ps_generation_gwh'),dAt.ps_delta_pct,'GWh'),
  kpi('DE · PSW-Nettobilanz',byrow('de','ps_net_gwh'),null,'GWh')].join('');
 function byrow(cc,key){const i=Y.indexOf(CUR);return D[cc].ps[key]?D[cc].ps[key][i]:null}
 
 document.getElementById('caveats').innerHTML=`<b>Methode und Datengrenzen.</b>
+<b>Natürliche Wasserkraft</b> (Laufwasser + Speicherwasser) ist der Dürre-Indikator dieser Analyse, denn nur sie hängt vom Zufluss ab. Pumpspeicher werden getrennt behandelt (Abschnitt&nbsp;3), weil ihre Erzeugung dem Netz entnommene Energie verschiebt (Round-trip&nbsp;&lt;&nbsp;100&nbsp;%) und nicht vom Niederschlag bestimmt wird. „Wasserkraft gesamt“ enthält die Pumpspeicher und dient nur dem Vergleich mit der üblichen Statistik.
 Sommer = 1. Juni – 31. August in Ortszeit; 15-Minuten-Reihen (DE, AT) und Stundenwerte (CH) zu GWh Erzeugung integriert.
 Deutschland und Österreich weisen <span class="tag">hydro_pumped_storage</span> (Erzeugung) und <span class="tag">hydro_pumped_storage_consumption</span> (Pumpbetrieb) getrennt aus, daher sind für diese Länder Pumpstrom, Nettobilanz und der Kreislaufwirkungsgrad berechenbar – für Österreich bleibt die Verbrauchsseite jedoch unvollständig (der scheinbare Wirkungsgrad liegt in allen zehn Jahren über 100 %, Pumpstrom ist dort eine Untergrenze).
 Für die Schweiz enthält die API v2 keine separate PSW-Verbrauchsserie – die Analyse des Pumpbetriebs ist eingeschränkt (siehe Spalte „Bilanzierung“).
