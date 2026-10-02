@@ -77,7 +77,7 @@ def fetch_country_year(country: str, year: int) -> dict:
         "longitude": lons,
         "start_date": f"{year}-03-01",
         "end_date": f"{year}-08-31",
-        "daily": "temperature_2m_mean,precipitation_sum,shortwave_radiation_sum",
+        "daily": "temperature_2m_mean,precipitation_sum,shortwave_radiation_sum,et0_fao_evapotranspiration",
         "timezone": "Europe/Berlin",
     }
     res = http_get(API, params)
@@ -89,13 +89,16 @@ def fetch_country_year(country: str, year: int) -> dict:
         tv = [arr[j]["daily"]["temperature_2m_mean"][i] for j in range(n)]
         pv = [arr[j]["daily"]["precipitation_sum"][i] for j in range(n)]
         rv = [arr[j]["daily"]["shortwave_radiation_sum"][i] for j in range(n)]
+        ev = [arr[j]["daily"]["et0_fao_evapotranspiration"][i] for j in range(n)]
         tv = [x for x in tv if x is not None]
         pv = [x for x in pv if x is not None]
         rv = [x for x in rv if x is not None]
+        ev = [x for x in ev if x is not None]
         out[dt] = {
             "t": sum(tv) / len(tv) if tv else None,
             "p": sum(pv) / len(pv) if pv else None,
             "rad": sum(rv) / len(rv) if rv else None,
+            "et0": sum(ev) / len(ev) if ev else None,
             "n_cells": len(tv),
         }
     return out

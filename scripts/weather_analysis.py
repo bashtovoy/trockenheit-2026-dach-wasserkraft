@@ -4,18 +4,31 @@
 Reads the cached daily weather (data/raw/weather_{country}_{year}.json.gz,
 written by fetch_weather.py) and the hydro records already computed in
 summary.json, and quantifies how the natural-hydro signal co-varies with
-independent meteorological drivers: 2 m temperature, precipitation and
-surface solar (shortwave) radiation.
+independent meteorological drivers and a physically-grounded water-balance
+drought index.
 
-Two grains, per the review decision:
-  * ANNUAL summer (Jun-Aug): n = years in window (10). Directly matches the
-    "Sommer 2026 vs 2017-2025" frame. Small-n, so r is reported with p and n.
-  * MONTHLY within summer: n = 3 x years per country (~30). Correlated on
-    WITHIN-MONTH ANOMALIES (value minus that country-month climatology) so the
-    seasonal cycle (Jun>Aug flow) does not masquerade as correlation.
-Plus an ANTECEDENT check: spring (Mar-May) precipitation -> summer hydro.
+Design (external-methodology audit, incorporated):
+  * Raw drivers: summer mean 2 m temperature, summer precipitation sum, summer
+    mean shortwave radiation, summer ET0 (FAO-56 reference evapotranspiration).
+  * Derived water-balance driver D = P - ET0 (mm over Jun-Aug): the deficit
+    that actually drives runoff, folding temperature/radiation into evaporative
+    demand instead of treating them as separate crude proxies.
+  * Climate baseline: every driver is STANDARDIZED against the fixed
+    1991-2020 ERA5 climatology (WMO reference period). The z of D is reported
+    as a "Wasserbilanz-Index" - an SPEI-3 proxy (a standardized water balance,
+    negative = deficit). This is NOT a full log-logistic-fitted SPEI; it is a
+    transparent standardized deficit, labelled as a proxy.
+  * Energy baseline stays 2017-2025 (the hydro side cannot use 1991-2020:
+    Energy-Charts has no earlier generation record) - documented asymmetry.
+  * Two grains: ANNUAL summers (n = analysis years, 10) and MONTHLY
+    within-month anomalies (value minus that country-month climatology) so the
+    seasonal cycle does not masquerade as correlation (n ~ 30).
+  * Antecedent: spring (Mar-May) precipitation -> summer hydro (prior-store
+    proxy; snow-water-equivalent is not exposed by the Open-Meteo daily API).
+  * Two coefficients per pair: Pearson r (linear) AND Spearman rho (monotonic,
+    robust for small n), each with a two-tailed p (Student t via the
+    regularized incomplete beta; no scipy).
 
-Output: a dict for summary["weather"], consumed by build_report.py.
 Attribution: ERA5 (Copernicus Climate Change Service) via open-meteo.com.
 """
 from __future__ import annotations
@@ -23,6 +36,7 @@ from __future__ import annotations
 import gzip
 import json
 import math
+import statistics as st
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,9 +44,11 @@ RAW = ROOT / "data" / "raw"
 OUT = ROOT / "output"
 
 COUNTRIES = ("de", "at", "ch")
-YEARS = list(range(2017, 2027))
+ANALYSIS_YEARS = list(range(2017, 2027))   # hydro generation available
+BASELINE_YEARS = list(range(1991, 2021))   # fixed WMO climate normal
 SUMMER = (6, 7, 8)
 SPRING = (3, 4, 5)
+DRIVERS = ("t", "p", "rad", "et0", "D", "spring_p")
 
 
 # ----------------------------------------------------- statistics helpers ----
@@ -108,6 +124,41 @@ def pearson(x: list[float], y: list[float]) -> tuple[float, float, int]:
     return r, p, n
 
 
+def _ranks(x: list[float]) -> list[float]:
+    """Average ranks (ties share the mean rank)."""
+    n = len(x)
+    order = sorted(range(n), key=lambda i: x[i])
+    ranks = [0.0] * n
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and x[order[j + 1]] == x[order[i]]:
+            j += 1
+        avg = (i + j) / 2.0 + 1.0
+        for k in range(i, j + 1):
+            ranks[order[k]] = avg
+        i = j + 1
+    return ranks
+
+
+def spearman(x: list[float], y: list[float]) -> tuple[float, float, int]:
+    """Spearman rho with two-tailed p (t-approximation on ranks)."""
+    n = len(x)
+    if n < 3:
+        return float("nan"), float("nan"), n
+    return pearson(_ranks(x), _ranks(y))
+
+
+def _corr(x: list[float], y: list[float]) -> dict:
+    """Bundle Pearson r/p and Spearman rho/p for one driver-response pair."""
+    if len(x) < 3:
+        return {"r": float("nan"), "p": float("nan"), "rho": float("nan"),
+                "p_rho": float("nan"), "n": len(x)}
+    r, p, n = pearson(x, y)
+    rho, p_rho, _ = spearman(x, y)
+    return {"r": r, "p": p, "rho": rho, "p_rho": p_rho, "n": n}
+
+
 # ------------------------------------------------------------- data loading --
 
 def _load_weather(country: str, year: int) -> dict | None:
@@ -119,22 +170,51 @@ def _load_weather(country: str, year: int) -> dict | None:
 
 
 def _monthly_from_daily(daily: dict) -> dict:
-    """Return {month_int: {"t":mean, "p":sum, "rad":mean}} from {date:{t,p,rad}}."""
+    """Return {month_int: {"t","p","rad","et0"}} aggregated from {date:{...}}."""
     acc: dict[int, dict[str, list[float]]] = {}
     for date, v in daily.items():
         m = int(date[5:7])
-        for k in ("t", "p", "rad"):
+        for k in ("t", "p", "rad", "et0"):
             if v.get(k) is None:
                 continue
-            acc.setdefault(m, {"t": [], "p": [], "rad": []})[k].append(v[k])
+            acc.setdefault(m, {"t": [], "p": [], "rad": [], "et0": []})[k].append(v[k])
     out = {}
     for m, d in acc.items():
         out[m] = {
             "t": sum(d["t"]) / len(d["t"]) if d["t"] else None,
             "p": sum(d["p"]) if d["p"] else None,
             "rad": sum(d["rad"]) / len(d["rad"]) if d["rad"] else None,
+            "et0": sum(d["et0"]) if d["et0"] else None,
         }
     return out
+
+
+def _summer_metrics(daily: dict) -> dict:
+    """Summer (Jun-Aug) aggregates + water balance D = P - ET0 + spring precip."""
+    tt, pp, rr, ee, sp = [], [], [], [], []
+    for date, v in daily.items():
+        m = int(date[5:7])
+        if m in SUMMER:
+            if v.get("t") is not None:
+                tt.append(v["t"])
+            if v.get("p") is not None:
+                pp.append(v["p"])
+            if v.get("rad") is not None:
+                rr.append(v["rad"])
+            if v.get("et0") is not None:
+                ee.append(v["et0"])
+        elif m in SPRING and v.get("p") is not None:
+            sp.append(v["p"])
+    p_sum = sum(pp) if pp else None
+    et0_sum = sum(ee) if ee else None
+    return {
+        "t": sum(tt) / len(tt) if tt else None,
+        "p": p_sum,
+        "rad": sum(rr) / len(rr) if rr else None,
+        "et0": et0_sum,
+        "D": (p_sum - et0_sum) if (p_sum is not None and et0_sum is not None) else None,
+        "spring_p": sum(sp) if sp else None,
+    }
 
 
 def _hydro_maps(summary: dict, country: str) -> tuple[dict, dict]:
@@ -151,103 +231,155 @@ def _cell_latlon(country: str) -> list:
     return [list(x) for x in CELLS[country]]
 
 
+def _zval(x, mu, sd):
+    if x is None or mu is None or not sd:
+        return None
+    return (x - mu) / sd
+
+
 def compute(summary: dict) -> dict:
-    years = [y for y in YEARS if _load_weather("de", y)]
-    wmo = {}       # per-country monthly weather
-    wan = {}       # per-country annual weather
-    hann = {}      # per-country annual hydro
-    hmon = {}      # per-country monthly hydro
+    # ---- load summer metrics for all available years (baseline + analysis) ----
+    summer = {c: {} for c in COUNTRIES}
+    months = {c: {} for c in COUNTRIES}
     for c in COUNTRIES:
-        ann, mon = _hydro_maps(summary, c)
-        hann[c], hmon[c] = ann, mon
-        wmo[c], wan[c] = {}, {}
-        for y in years:
+        for y in BASELINE_YEARS + ANALYSIS_YEARS:
             daily = _load_weather(c, y)
             if not daily:
                 continue
-            mm = _monthly_from_daily(daily)
-            wmo[c][y] = mm
-            st_t = [mm[m]["t"] for m in SUMMER if m in mm and mm[m]["t"] is not None]
-            st_p = [mm[m]["p"] for m in SUMMER if m in mm and mm[m]["p"] is not None]
-            st_r = [mm[m]["rad"] for m in SUMMER if m in mm and mm[m]["rad"] is not None]
-            sp_p = [mm[m]["p"] for m in SPRING if m in mm and mm[m]["p"] is not None]
-            wan[c][y] = {
-                "t": sum(st_t) / len(st_t) if st_t else None,
-                "p": sum(st_p) if st_p else None,
-                "rad": sum(st_r) / len(st_r) if st_r else None,
-                "spring_p": sum(sp_p) if sp_p else None,
-            }
+            summer[c][y] = _summer_metrics(daily)
+            months[c][y] = _monthly_from_daily(daily)
 
-    def corr(vals_x, vals_y):
-        r, p, n = pearson(vals_x, vals_y)
-        return {"r": r, "p": p, "n": n}
+    # ---- baseline (1991-2020) mean/std per driver, per country ----
+    baseline = {c: {} for c in COUNTRIES}
+    for c in COUNTRIES:
+        for key in DRIVERS:
+            vs = [summer[c][y][key] for y in BASELINE_YEARS
+                  if y in summer[c] and summer[c][y].get(key) is not None]
+            mu = st.mean(vs) if vs else None
+            sd = st.pstdev(vs) if len(vs) > 1 else None
+            baseline[c][key] = {"mean": mu, "std": sd, "n": len(vs)}
 
-    def pair(c, wvar, hyd_var, ys):
+    # ---- hydro maps (analysis years) ----
+    hann, hmon = {}, {}
+    for c in COUNTRIES:
+        a, m = _hydro_maps(summary, c)
+        hann[c], hmon[c] = a, m
+
+    def series(c, key, ys):
         xs, ysv = [], []
         for y in ys:
-            wx = wan[c].get(y, {}).get(wvar)
-            hv = hann[c].get(y, {}).get(hyd_var)
-            if wx is not None and hv is not None:
-                xs.append(wx); ysv.append(hv)
-        return corr(xs, ysv) if len(xs) >= 3 else {"r": float("nan"), "p": float("nan"), "n": len(xs)}
+            wv = summer[c].get(y, {}).get(key)
+            hv = hann[c].get(y, {}).get("natural")
+            if wv is not None and hv is not None:
+                xs.append(wv)
+                ysv.append(hv)
+        return xs, ysv
 
-    # ---- annual correlations (raw, n = years) ----
+    ys_all = [y for y in ANALYSIS_YEARS if y in summer.get("de", {})]
+
+    # ---- annual correlations (raw summer values vs natural hydro) ----
     annual = {c: {} for c in COUNTRIES}
     for c in COUNTRIES:
-        ys = [y for y in years if y in wan[c] and y in hann[c]]
-        for wv in ("t", "p", "rad", "spring_p"):
-            annual[c][wv] = pair(c, wv, "natural", ys)
-        annual[c]["p_vs_ror"] = pair(c, "p", "ror", ys)
+        ys = [y for y in ANALYSIS_YEARS if y in summer[c] and y in hann[c]]
+        for wv in DRIVERS:
+            xs, ysv = series(c, wv, ys)
+            annual[c][wv] = _corr(xs, ysv)
+        # water-balance index expressed as z vs 1991-2020 (same r as raw D, but
+        # reported as a climate-referenced deficit index for interpretation)
+    # run-of-river sensitivity to water balance (nearest to discharge)
+    for c in COUNTRIES:
+        ys = [y for y in ANALYSIS_YEARS if y in summer[c] and y in hann[c]]
+        xs, ysv = [], []
+        for y in ys:
+            wv = summer[c].get(y, {}).get("D")
+            hv = hann[c].get(y, {}).get("ror")
+            if wv is not None and hv is not None:
+                xs.append(wv); ysv.append(hv)
+        annual[c]["D_vs_ror"] = _corr(xs, ysv)
 
-    # ---- monthly correlations on within-month ANOMALIES (n = 3*years) ----
+    # ---- monthly correlations on within-month ANOMALIES (n ~ 3*years) ----
     monthly = {c: {} for c in COUNTRIES}
     for c in COUNTRIES:
-        # climatology per (month) over the window
-        clim = {}
+        clim, hclim = {}, {}
         for m in SUMMER:
-            for key in ("t", "p", "rad"):
-                vs = [wmo[c][y][m][key] for y in years
-                      if y in wmo[c] and m in wmo[c][y] and wmo[c][y][m][key] is not None]
-                clim[(m, key)] = sum(vs) / len(vs) if vs else None
-        hclim = {}
-        for m in SUMMER:
-            vs = [hmon[c][(y, m)] for y in years if (y, m) in hmon[c] and hmon[c][(y, m)] is not None]
-            hclim[m] = sum(vs) / len(vs) if vs else None
-        for wv in ("t", "p", "rad"):
+            for key in ("t", "p", "rad", "et0"):
+                vs = [months[c][y][m][key] for y in ANALYSIS_YEARS
+                      if y in months[c] and m in months[c][y] and months[c][y][m].get(key) is not None]
+                clim[(m, key)] = st.mean(vs) if vs else None
+            vs = [hmon[c][(y, m)] for y in ANALYSIS_YEARS if (y, m) in hmon[c] and hmon[c][(y, m)] is not None]
+            hclim[m] = st.mean(vs) if vs else None
+        for wv in ("t", "p", "rad", "D_m"):
             xs, ysv = [], []
-            for y in years:
+            for y in ANALYSIS_YEARS:
                 for m in SUMMER:
-                    if y not in wmo[c] or m not in wmo[c][y] or (y, m) not in hmon[c]:
+                    if y not in months[c] or m not in months[c][y] or (y, m) not in hmon[c]:
                         continue
-                    wx = wmo[c][y][m][wv]; hv = hmon[c][(y, m)]
-                    if wx is None or hv is None or clim.get((m, wv)) is None or hclim.get(m) is None:
+                    if wv == "D_m":
+                        pw, ew = months[c][y][m].get("p"), months[c][y][m].get("et0")
+                        cw, ce = clim.get((m, "p")), clim.get((m, "et0"))
+                        if None in (pw, ew, cw, ce):
+                            continue
+                        wx = (pw - ew) - (cw - ce)
+                    else:
+                        wx = months[c][y][m].get(wv)
+                        cw = clim.get((m, wv))
+                        if wx is None or cw is None:
+                            continue
+                        wx = wx - cw
+                    hv = hmon[c][(y, m)]
+                    if hv is None or hclim.get(m) is None:
                         continue
-                    xs.append(wx - clim[(m, wv)]); ysv.append(hv - hclim[m])
-            monthly[c][wv] = corr(xs, ysv) if len(xs) >= 3 else {"r": float("nan"), "p": float("nan"), "n": len(xs)}
+                    xs.append(wx); ysv.append(hv - hclim[m])
+            monthly[c][wv] = _corr(xs, ysv)
 
-    # ---- scatter data (percent-of-country-mean) for the report chart ----
+    # ---- scatter: Wasserbilanz-Index z(D) vs natural hydro (% of analysis mean) ----
     scatter = {}
     for c in COUNTRIES:
-        ys = [y for y in years if y in wan[c] and y in hann[c]]
+        ys = [y for y in ANALYSIS_YEARS if y in summer[c] and y in hann[c]]
         base_h = [hann[c][y]["natural"] for y in ys if hann[c].get(y, {}).get("natural")]
-        base_p = [wan[c][y]["p"] for y in ys if wan[c].get(y, {}).get("p") is not None]
-        mh = sum(base_h) / len(base_h) if base_h else None
-        mp = sum(base_p) / len(base_p) if base_p else None
+        mh = st.mean(base_h) if base_h else None
+        bD = baseline[c]["D"]
         pts = []
         for y in ys:
-            h = hann[c][y].get("natural"); p = wan[c][y].get("p")
-            if h and p is not None and mh and mp:
-                pts.append({"year": y, "x": round(100 * p / mp, 1), "y": round(100 * h / mh, 1)})
+            h = hann[c][y].get("natural")
+            d = summer[c][y].get("D")
+            if not h or mh is None or d is None or bD["mean"] is None or not bD["std"]:
+                continue
+            pts.append({"year": y,
+                        "x": round((d - bD["mean"]) / bD["std"], 2),
+                        "y": round(100 * h / mh, 1)})
         scatter[c] = pts
+
+    # ---- per-year annual table (analysis) with z-scores vs baseline ----
+    annual_weather = {}
+    for c in COUNTRIES:
+        rows = {}
+        bD = baseline[c]["D"]
+        for y in ANALYSIS_YEARS:
+            if y not in summer[c]:
+                continue
+            s = summer[c][y]
+            rows[str(y)] = {
+                "t": s["t"], "p": s["p"], "rad": s["rad"], "et0": s["et0"], "D": s["D"],
+                "z_t": _zval(s["t"], baseline[c]["t"]["mean"], baseline[c]["t"]["std"]),
+                "z_p": _zval(s["p"], baseline[c]["p"]["mean"], baseline[c]["p"]["std"]),
+                "z_D": _zval(s["D"], bD["mean"], bD["std"]),
+                "natural": hann[c].get(y, {}).get("natural"),
+            }
+        annual_weather[c] = rows
 
     return {
         "source": "ERA5 (Copernicus CDS) via open-meteo.com",
+        "model": "ERA5 (single reanalysis; no best-match model mixing)",
         "window": "summer 06-01..08-31; antecedent 03-01..05-31",
-        "grain_note": "annual = raw; monthly = within-month anomalies; antecedent = spring precip -> summer hydro",
-        "years": years,
+        "climate_baseline": "1991-2020 (WMO reference period)",
+        "energy_baseline": "2017-2025 (Energy-Charts hydro record; no earlier data)",
+        "index_def": "Wasserbilanz-Index z = ((P - ET0)_summer - mu_1991-2020)/sigma_1991-2020; <0 = Defizit (SPEI-3-Proxy)",
+        "grain_note": "annual = raw summer values; monthly = within-month anomalies; D = P-ET0",
+        "years": ys_all,
         "cells": {c: _cell_latlon(c) for c in COUNTRIES},
-        "annual_weather": {c: {str(y): wan[c].get(y) for y in years} for c in COUNTRIES},
-        "annual_hydro": {c: {str(y): hann[c].get(y) for y in years} for c in COUNTRIES},
+        "baseline": baseline,
+        "annual_weather": annual_weather,
         "annual_corr": annual,
         "monthly_corr": monthly,
         "scatter": scatter,
@@ -260,14 +392,15 @@ def main() -> None:
     (OUT / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
     w = summary["weather"]
-    print("weather block written; years:", w["years"])
+    print("weather block written; analysis years:", w["years"])
     for c in COUNTRIES:
         a, m = w["annual_corr"][c], w["monthly_corr"][c]
-        print(f"{c.upper()} annual: t r={a['t']['r']:+.2f}(p={a['t']['p']:.3f}) "
-              f"precip r={a['p']['r']:+.2f}(p={a['p']['p']:.3f}) rad r={a['rad']['r']:+.2f}(p={a['rad']['p']:.3f}) "
-              f"| springP-> r={a['spring_p']['r']:+.2f}(p={a['spring_p']['p']:.3f})")
-        print(f"      monthly(anom): t r={m['t']['r']:+.2f}(p={m['t']['p']:.3f}) "
-              f"precip r={m['p']['r']:+.2f}(p={m['p']['p']:.3f}) rad r={m['rad']['r']:+.2f}(p={m['rad']['p']:.3f})")
+        bd = w["baseline"][c]["D"]
+        print(f"{c.upper()} baseline D summer-sum: mean={bd['mean']:.0f}mm sd={bd['std']:.0f}mm (n={bd['n']})")
+        for k in DRIVERS:
+            v = a[k]
+            print(f"  {k:>8}: Pearson r={v['r']:+.2f}(p={v['p']:.3f})  Spearman rho={v['rho']:+.2f}(p={v['p_rho']:.3f})  n={v['n']}")
+        print(f"  monthly D-anom: r={m['D_m']['r']:+.2f}(p={m['D_m']['p']:.3f}) n={m['D_m']['n']}")
 
 
 if __name__ == "__main__":

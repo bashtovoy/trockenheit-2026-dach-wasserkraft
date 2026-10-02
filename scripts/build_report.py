@@ -259,13 +259,13 @@ li{margin:4px 0}
 </div>
 <div class="scroll" style="margin-top:12px"><table id="tbl_flow"></table></div>
 
-<h2>5. Meteorologischer Kontext – unabhängige Einordnung (ERA5)</h2>
-<div class="note">Die bisherigen Abschnitte messen Trockenheit <i>energiestatistisch</i> über die Wasserkrafterzeugung. Hier wird das Signal mit <b>unabhängigen Wetterdaten</b> abgeglichen: ERA5-Tageswerte (2&nbsp;m-<b>Temperatur</b>, <b>Niederschlag</b>, <b>Globstrahlung</b>) über ein Raster repräsentativer, alpin gewichteter Zellen je Land – Quelle <b>open-meteo.com / Copernicus CDS</b>, nicht energy-charts. Es ist eine <b>explorative Korrelation, kein Kausalnachweis</b>; die Jahresreihe umfasst nur n=10 Sommer.</div>
+<h2>5. Meteorologisch → Wasserbilanz → Energie – unabhängige Einordnung (ERA5)</h2>
+<div class="note">Die bisherigen Abschnitte messen Trockenheit <i>energiestatistisch</i> über die Wasserkrafterzeugung. Hier wird das Signal mit <b>unabhängigen Wetterdaten</b> abgeglichen: ERA5-Tageswerte (2&nbsp;m-<b>Temperatur</b>, <b>Niederschlag</b>, <b>Globstrahlung</b>, <b>ET₀</b> nach FAO-56) über ein Raster repräsentativer, alpin gewichteter Zellen je Land – Quelle <b>open-meteo.com / Copernicus CDS (ERA5)</b>, nicht energy-charts. Kernstück ist die <b>Wasserbilanz D&nbsp;=&nbsp;Niederschlag&nbsp;−&nbsp;ET₀</b>: Temperatur und Strahlung gehen als <i>verdunstungswirksame</i> Nachfrage ein, statt als zwei grobe Einzelproxi zu gelten. D wird gegen die feste <b>Klimanormal 1991–2020</b> standardisiert (&laquo;Wasserbilanz-Index&raquo;, ein <b>SPEI-3-Proxy</b>; &lt;&nbsp;0 = Defizit); die Referenz für die <i>Energieanomalie</i> bleibt 2017–2025, weil energy-charts keine frühere Erzeugung führt. Ausgewiesen werden <b>Pearson r und Spearman ρ</b> mit zweiseitigem p. Es ist eine <b>explorative Korrelation, kein Kausalnachweis</b>; die Jahresreihe umfasst nur n=10 Sommer.</div>
 <div class="grid">
-  <div class="card"><h3>Sommerniederschlag vs. natürliche Wasserkraft (je % des Ländermittels 2017–26)</h3><div class="cbody"><canvas id="wx_scatter"></canvas></div></div>
+  <div class="card"><h3>Wasserbilanz-Index (D&nbsp;=&nbsp;P−ET₀, z ggü. 1991–2020) vs. natürliche Wasserkraft (% des Ländermittels 2017–26)</h3><div class="cbody"><canvas id="wx_scatter"></canvas></div></div>
   <div class="card" style="display:block"><h3>Kernbefund</h3><div id="wx_takeaway" class="note" style="margin:0"></div></div>
 </div>
-<h3>Korrelationen r mit der natürlichen Wasserkraft</h3>
+<h3>Korrelationen mit der natürlichen Wasserkraft (r = Pearson, ρ = Spearman)</h3>
 <div class="scroll"><table id="tbl_wx"></table></div>
 
 
@@ -510,10 +510,12 @@ table('tbl_price', D.price_rows, priceCols);
 if(D.weather){
   const wxNames={de:'Deutschland',at:'Österreich',ch:'Schweiz'};
   const wxC={de:C.de,at:C.at,ch:C.ch};
-  // Scatter: Niederschlag vs. natürliche WK (je % des Ländermittels)
+  const fmtnum=v=>(v==null||isNaN(v))?'–':((v>=0?'+':'')+v.toFixed(2).replace('.',','));
+  const fmt_p=p=>(p==null||isNaN(p))?'–':(p<0.001?'<0,001':p.toFixed(3).replace('.',','));
+  // Scatter: Wasserbilanz-Index z(D=P−ET0) vs. natürliche WK (% des Ländermittels)
   const wxDs=['de','at','ch'].map(c=>{
-    const r=D.weather.annual_corr[c].p.r;
-    return{label:wxNames[c]+' (r='+(r>=0?'+':'')+r.toFixed(2)+')',
+    const d=D.weather.annual_corr[c].D;
+    return{label:wxNames[c]+' (r='+fmtnum(d.r)+')',
       data:D.weather.scatter[c].map(p=>({x:p.x,y:p.y})),
       backgroundColor:wxC[c],borderColor:wxC[c],pointRadius:5,pointHoverRadius:7};
   });
@@ -522,23 +524,24 @@ if(D.weather){
       tooltip:{callbacks:{label:function(ctx){
         const pts=D.weather.scatter[['de','at','ch'][ctx.datasetIndex]];
         const pt=pts[ctx.dataIndex];
-        return(pt?'Jahr '+pt.year:'')+': Niederschlag '+ctx.parsed.x.toFixed(1)+' %, WK '+ctx.parsed.y.toFixed(1)+' %';
+        return(pt?'Jahr '+pt.year:'')+': Bilanz '+fmtnum(ctx.parsed.x)+'σ, WK '+ctx.parsed.y.toFixed(1)+' %';
       }}}},
-      scales:{x:{title:{display:true,text:'Sommerniederschlag, % des Ländermittels 2017–26'},grid:{color:'#e6e6e6'}},
+      scales:{x:{title:{display:true,text:'Wasserbilanz-Index z (P−ET₀, ggü. 1991–2020)  ◀ trockener'},grid:{color:'#e6e6e6'}},
               y:{title:{display:true,text:'Natürliche Wasserkraft, % des Ländermittels 2017–26'},grid:{color:'#e6e6e6'}}}}});
 
-  // Korrelations-Tabelle r/p
-  const varLabels={t:'2 m-Temperatur',p:'Niederschlag',rad:'Globstrahlung',spring_p:'Frühlings-N (Mär–Mai) → Sommer-WK'};
+  // Korrelations-Tabelle: r (Pearson) und rho (Spearman)
+  const varLabels={t:'2 m-Temperatur',p:'Niederschlag',rad:'Globstrahlung',et0:'ET₀ (Verdunstung)',D:'Wasserbilanz D = P−ET₀',spring_p:'Frühlings-N (Mär–Mai) → Sommer-WK',D_m:'Wasserbilanz D (Monatsanomalie)'};
   const stars=p=>{if(p==null||isNaN(p))return'';if(p<0.001)return' ***';if(p<0.01)return' **';if(p<0.05)return' *';return''};
-  let wxH='<thead><tr><th>Land</th><th>Wettervariable</th><th>Korn</th><th>r</th><th>p</th><th>n</th></tr></thead><tbody>';
+  let wxH='<thead><tr><th>Land</th><th>Treiber</th><th>Korn</th><th>r</th><th>p</th><th>ρ</th><th>p(ρ)</th><th>n</th></tr></thead><tbody>';
+  const row=(cn,lab,grain,v,strong)=>'<tr'+(strong?' style="background:rgba(0,147,116,.07);font-weight:600"':'')+'><td>'+cn+'</td><td>'+lab+'</td><td>'+grain+'</td><td>'+fmtnum(v.r)+'</td><td>'+fmt_p(v.p)+stars(v.p)+'</td><td>'+fmtnum(v.rho)+'</td><td>'+fmt_p(v.p_rho)+stars(v.p_rho)+'</td><td>'+v.n+'</td></tr>';
   for(const c of['de','at','ch']){
     const a=D.weather.annual_corr[c],m=D.weather.monthly_corr[c];
-    for(const v of['t','p','rad','spring_p']){
+    for(const v of['D','p','t','rad','et0','spring_p']){
       if(!a[v]||isNaN(a[v].r))continue;
-      wxH+='<tr><td>'+wxNames[c]+'</td><td>'+varLabels[v]+'</td><td>Jährlich</td><td>'+(a[v].r>=0?'+':'')+a[v].r.toFixed(2)+'</td><td>'+(a[v].p<0.001?'<0,001':a[v].p.toFixed(3).replace('.',',')) +stars(a[v].p)+'</td><td>'+a[v].n+'</td></tr>';}
-    for(const v of['t','p','rad']){
+      wxH+=row(wxNames[c],varLabels[v],'Jährlich',a[v],v==='D');}
+    for(const v of['D_m','p','t','rad']){
       if(!m[v]||isNaN(m[v].r))continue;
-      wxH+='<tr><td>'+wxNames[c]+'</td><td>'+varLabels[v]+'</td><td>Monatsanomalie</td><td>'+(m[v].r>=0?'+':'')+m[v].r.toFixed(2)+'</td><td>'+(m[v].p<0.001?'<0,001':m[v].p.toFixed(3).replace('.',','))+stars(m[v].p)+'</td><td>'+m[v].n+'</td></tr>';}
+      wxH+=row(wxNames[c],varLabels[v]||('Monatsanomalie '+v),'Monatsanomalie',m[v],v==='D_m');}
   }
   wxH+='</tbody>';
   document.getElementById('tbl_wx').innerHTML=wxH;
@@ -546,18 +549,17 @@ if(D.weather){
   // Kernbefund-Text
   const dR=D.weather.annual_corr.de,aR=D.weather.annual_corr.at,cR=D.weather.annual_corr.ch;
   document.getElementById('wx_takeaway').innerHTML=
-    '<b>Zusammenfassung:</b> Die explorative Korrelation bestätigt den erwarteten physikalischen Zusammenhang: '+
-    'In <b>Deutschland</b> und <b>Österreich</b> kovariiert die natürliche Wasserkraft signifikant mit allen drei Wettervariablen '+
-    '(DE: Temperatur r='+dR.t.r.toFixed(2)+', Niederschlag r='+dR.p.r.toFixed(2)+', Strahlung r='+dR.rad.r.toFixed(2)+ '; alle p&nbsp;&lt;&nbsp;0,05). '+
-    'Die <b>Schweiz</b> zeigt im selben Sommer schwächere Gleichzeitigkeit (r<sub>nat</sub>&nbsp;=&nbsp;'+cR.p.r.toFixed(2)+', p&gt;0,05 – Speicher-Pufferung), '+
-    'aber der <b>Frühlingsniederschlag</b> als Vorlaufsignal erreicht r&nbsp;=&nbsp;'+cR.spring_p.r.toFixed(2)+' (p&nbsp;=&nbsp;'+cR.spring_p.p.toFixed(3)+'). '+
-    'Monatsanomalien (n&nbsp;=&nbsp;30) bestätigen das DE/AT-Muster; für CH bleibt die Korrelation auf diesem Korn nicht signifikant.';
+    '<b>Zusammenfassung:</b> Der physikalisch begründete Treiber – die <b>Sommerwasserbilanz D&nbsp;=&nbsp;P&nbsp;−&nbsp;ET₀</b> – kovariiert in <b>Deutschland</b> (r&nbsp;=&nbsp;'+fmtnum(dR.D.r)+', ρ&nbsp;=&nbsp;'+fmtnum(dR.D.rho)+') und <b>Österreich</b> (r&nbsp;=&nbsp;'+fmtnum(aR.D.r)+', ρ&nbsp;=&nbsp;'+fmtnum(aR.D.rho)+') deutlich positiv mit der natürlichen Wasserkraft (alle p&nbsp;&lt;&nbsp;0,05). '+
+    'Temperatur und Strahlung wirken dabei indirekt über die <i>verdunstungswirksame Nachfrage</i> (höheres ET₀&nbsp;→&nbsp;kleineres D). '+
+    'Die <b>Schweiz</b> zeigt im selben Sommer eine schwächere Gleichzeitigkeit (r&nbsp;=&nbsp;'+fmtnum(cR.D.r)+', p&nbsp;&gt;&nbsp;0,05 – Speicher-Pufferung), '+
+    'aber der <b>Frühlingsniederschlag</b> als Vorlaufsignal für den Alperraum erreicht r&nbsp;=&nbsp;'+fmtnum(cR.spring_p.r)+' (p&nbsp;=&nbsp;'+fmt_p(cR.spring_p.p)+'). '+
+    'Monatsanomalien (n&nbsp;=&nbsp;30, binnen-monthlich klimate bereinigt) bestätigen das DE/AT-Muster; für CH bleibt es auf diesem Korn nicht signifikant.';
 }else{
   const wxSection=document.getElementById('wx_scatter');
   if(wxSection){const card=wxSection.closest('.card');if(card)card.parentElement.remove();}
   const tw=document.getElementById('tbl_wx');if(tw&&tw.closest('.scroll'))tw.closest('.scroll').remove();
   const tt=document.getElementById('wx_takeaway');if(tt)tt.closest('.card').remove();
-  const h2s=document.querySelectorAll('h2');h2s.forEach(h=>{if(h.textContent.includes('Meteorologischer')){let n=h.nextElementSibling;while(n&&!n.matches('h2')){const r=n;n=n.nextElementSibling;r.remove()}h.remove()}});
+  const h2s=document.querySelectorAll('h2');h2s.forEach(h=>{if(h.textContent.includes('Wasserbilanz → Energie')){let n=h.nextElementSibling;while(n&&!n.matches('h2')){const r=n;n=n.nextElementSibling;r.remove()}h.remove()}});
 }
 </script></body></html>
 """
