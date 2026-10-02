@@ -10,6 +10,7 @@ from findings import build as build_narrative
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
+COUNTRIES = ("de", "at", "ch")   # DACH, in report order
 CURRENT = 2026
 BASE = list(range(2017, 2026))  # reference years, "previous years" excluding current
 
@@ -50,7 +51,7 @@ def main() -> None:
     data: dict = {"years": list(range(2017, CURRENT + 1))}
     findings: dict = {}
 
-    for c in ("de", "ch"):
+    for c in COUNTRIES:
         hy = summary[f"{c}_hydro"]
         ps = summary[f"{c}_ps"]
         cur = by_year(hy, CURRENT)
@@ -120,32 +121,32 @@ def main() -> None:
                       ["price_mean", "price_median", "price_max", "daily_spread_mean", "neg_hours_pct"]}
     data["price_rows"] = summary["prices"]
     data["findings"] = findings
-    data["hydro_rows"] = {"de": summary["de_hydro"], "ch": summary["ch_hydro"]}
-    data["ps_rows"] = {"de": summary["de_ps"], "ch": summary["ch_ps"]}
+    data["hydro_rows"] = {c: summary[f"{c}_hydro"] for c in COUNTRIES}
+    data["ps_rows"] = {c: summary[f"{c}_ps"] for c in COUNTRIES}
     data["flow_rows"] = summary.get("flows", [])
     flows = summary.get("flows", [])
     data["flows"] = {
         c: {k: [next((r.get(k) for r in flows if r["country"] == C and r["year"] == y), None)
                 for y in data["years"]]
             for k in ("net_import_gwh", "net_as_pct_of_load", "import_gwh", "export_gwh")}
-        for c, C in (("de", "DE"), ("ch", "CH"))}
+        for c, C in zip(COUNTRIES, (x.upper() for x in COUNTRIES))}
     data["narrative"] = build_narrative(summary)
 
     (OUT / "report_data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     html = TEMPLATE.replace("__DATA__", json.dumps(data, ensure_ascii=False))
     (OUT / "report.html").write_text(html, encoding="utf-8")
     print("wrote", OUT / "report.html")
-    for c in ("de", "ch"):
+    for c in COUNTRIES:
         print(c.upper(), json.dumps(findings[c], ensure_ascii=False))
 
 
 TEMPLATE = r"""<!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wasserkraft und Pumpspeicher: Schweiz und Deutschland, Sommer 2026 vs. 2017–2025</title>
+<title>Wasserkraft und Pumpspeicher im DACH-Raum: Deutschland, Österreich, Schweiz – Sommer 2026 vs. 2017–2025</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0f1419;--card:#171d24;--ink:#e6edf3;--mut:#8b98a5;--de:#4aa3ff;--ch:#ff7a45;--hydro:#3fb950;--ps:#d29922;--line:#232b34}
+:root{--bg:#0f1419;--card:#171d24;--ink:#e6edf3;--mut:#8b98a5;--de:#4aa3ff;--at:#a371f7;--ch:#ff7a45;--hydro:#3fb950;--ps:#d29922;--line:#232b34}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 header{padding:28px 32px 12px;border-bottom:1px solid var(--line)}
@@ -175,8 +176,8 @@ li{margin:4px 0}
 .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;background:var(--line);color:var(--mut);margin-right:6px}
 </style></head><body>
 <header>
-<h1>Wasserkraft und Pumpspeicherbetrieb – Schweiz und Deutschland</h1>
-<p class="sub">Sommersaison 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025 · Quelle: <b>energy-charts.info API v2</b> (Fraunhofer ISE, CC BY 4.0) · Einheiten: GWh Erzeugung, Preise: Day-ahead in EUR/MWh</p>
+<h1>Wasserkraft und Pumpspeicherbetrieb im DACH-Raum – Deutschland, Österreich, Schweiz</h1>
+<p class="sub">Alpenraum / DACH · Sommersaison 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025 · Quelle: <b>energy-charts.info API v2</b> (Fraunhofer ISE, CC BY 4.0) · Einheiten: GWh Erzeugung, Preise: Day-ahead in EUR/MWh</p>
 </header>
 <main>
 <div class="kpis" id="kpis"></div>
@@ -185,6 +186,7 @@ li{margin:4px 0}
 <h2>1. Wasserkraft im Sommer: Struktur und Dynamik</h2>
 <div class="grid">
   <div class="card"><h3>Deutschland: Erzeugung nach Art, GWh (Summe Juni–August)</h3><canvas id="de_stack"></canvas></div>
+  <div class="card"><h3>Österreich: Erzeugung nach Art, GWh (Summe Juni–August)</h3><canvas id="at_stack"></canvas></div>
   <div class="card"><h3>Schweiz: Erzeugung nach Art, GWh (Summe Juni–August)</h3><canvas id="ch_stack"></canvas></div>
 </div>
 <div class="grid">
@@ -195,16 +197,19 @@ li{margin:4px 0}
 <h2>2. Monats- und Tagesverlauf</h2>
 <div class="grid">
   <div class="card"><h3>Deutschland: Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><canvas id="de_daily"></canvas></div>
+  <div class="card"><h3>Österreich: Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><canvas id="at_daily"></canvas></div>
   <div class="card"><h3>Schweiz: Wasserkraft je Sommertag, GWh/Tag (7-Tage-Mittel)</h3><canvas id="ch_daily"></canvas></div>
 </div>
 <div class="grid">
   <div class="card"><h3>Deutschland: Laufwasser vs. Speicherwasser vs. Pumpspeicher je Monat</h3><canvas id="de_split"></canvas></div>
+  <div class="card"><h3>Österreich: Laufwasser vs. Speicherwasser vs. Pumpspeicher je Monat</h3><canvas id="at_split"></canvas></div>
   <div class="card"><h3>Schweiz: Laufwasser vs. Speicherwasser vs. Pumpspeicher je Monat</h3><canvas id="ch_split"></canvas></div>
 </div>
 
 <h2>3. Pumpspeicherkraftwerke (PSW)</h2>
 <div class="grid">
   <div class="card"><h3>Deutschland: Erzeugung / Pumpstrom / Netto, GWh</h3><canvas id="de_ps"></canvas></div>
+  <div class="card"><h3>Österreich: Erzeugung / Pumpstrom / Netto, GWh</h3><canvas id="at_ps"></canvas></div>
   <div class="card"><h3>Schweiz: PSW-Erzeugung und Anteil an der Wasserkraft, GWh / %</h3><canvas id="ch_ps"></canvas></div>
 </div>
 <div class="grid">
@@ -212,11 +217,15 @@ li{margin:4px 0}
   <div class="card"><h3>Deutschland: Day-ahead-Preis nach Stunden, EUR/MWh</h3><canvas id="de_price_profile"></canvas></div>
 </div>
 <div class="grid">
+  <div class="card"><h3>Österreich: mittleres Leistungsprofil nach Tagesstunde, MW</h3><canvas id="at_profile"></canvas></div>
+  <div class="card"><h3>Day-ahead-Preisprofile Sommer 2026: DE · AT · CH, EUR/MWh</h3><canvas id="dach_price"></canvas></div>
+</div>
+<div class="grid">
   <div class="card"><h3>Deutschland: Benutzungsstunden der PSW und Wirkungsgrad</h3><canvas id="de_flh"></canvas></div>
   <div class="card"><h3>Arbitrage-Ökonomie: Preisspread und theoretische DA-Marge</h3><canvas id="de_econ"></canvas></div>
 </div>
 <div class="grid">
-  <div class="card"><h3>Wandel des PSW-Betriebsregimes: Pumpanteil 10–16 Uhr, Erzeugungsanteil 17–24 Uhr</h3><canvas id="de_regime"></canvas></div>
+  <div class="card"><h3>Wandel des PSW-Betriebsregimes (DE · AT · CH): Pumpanteil 10–16 Uhr, Erzeugungsanteil 17–24 Uhr</h3><canvas id="de_regime"></canvas></div>
   <div class="card"><h3>Preisprofil nach Stunden (Sommer 2026 vs. 2017–24) – Kontext des Wandels</h3><canvas id="de_price_yearly"></canvas></div>
 </div>
 
@@ -241,10 +250,15 @@ li{margin:4px 0}
 <script>
 const D = __DATA__;
 const Y = D.years, CUR = 2026, PREV = Y.filter(y=>y<CUR);
-const C = {de:'#4aa3ff', ch:'#ff7a45', ror:'#3fb950', res:'#8ede92', ps:'#d29922', neg:'#f85149', ink:'#e6edf3', mut:'#8b98a5', line:'#232b34'};
+const C = {de:'#4aa3ff', at:'#a371f7', ch:'#ff7a45', ror:'#3fb950', res:'#8ede92', ps:'#d29922', neg:'#f85149', ink:'#e6edf3', mut:'#8b98a5', line:'#232b34'};
 Chart.defaults.color = C.mut; Chart.defaults.borderColor = C.line;
 Chart.defaults.font.size = 11.5;
-const fmt = (v,d=0)=> v==null?'–':Number(v).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmt = (v,d=0)=>{
+  if(v==null||v==='')return '–';
+  if(typeof v==='number'){return Number.isFinite(v)? v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';}
+  const n=Number(v);
+  return Number.isFinite(n)&&v!==''? n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}): String(v);
+};
 
 function smooth(arr,w=7){const o=[];for(let i=0;i<arr.length;i++){let s=0,n=0;for(let k=-Math.floor(w/2);k<=Math.floor(w/2);k++){const j=i+k;if(j>=0&&j<arr.length&&arr[j]!=null){s+=arr[j];n++}}o.push(n?+(s/n).toFixed(3):null)}return o}
 
@@ -254,6 +268,7 @@ function dailySeries(cc, key, years){
   return years.map(y=>({label:String(y), data: md.map(k=>D[cc].daily[k][String(y)]?D[cc].daily[k][String(y)][key]:null)}));
 }
 function dailySmooth(cc,key,years,w=7){return dailySeries(cc,key,years).map(s=>({label:s.label,data:smooth(s.data,w)}))}
+function dailyLabels(cc){return Object.keys(D[cc].daily).map(md=>md.replace('-','.'))}
 
 function barStack(cc, id){
   const h=D[cc].hydro;
@@ -263,23 +278,27 @@ function barStack(cc, id){
     {label:'Pumpspeicher',data:h.pumped_gwh,backgroundColor:C.ps}]},
    options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'GWh'}}}}});
 }
-barStack('de','de_stack'); barStack('ch','ch_stack');
+barStack('de','de_stack'); barStack('at','at_stack'); barStack('ch','ch_stack');
 
 new Chart(document.getElementById('share'),{type:'line',data:{labels:Y,datasets:[
   {label:'DE',data:D.de.hydro.hydro_share_of_load_pct,borderColor:C.de,backgroundColor:'transparent',tension:.25},
+  {label:'AT',data:D.at.hydro.hydro_share_of_load_pct,borderColor:C.at,backgroundColor:'transparent',tension:.25},
   {label:'CH',data:D.ch.hydro.hydro_share_of_load_pct,borderColor:C.ch,backgroundColor:'transparent',tension:.25}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'% des Verbrauchs'}}}}});
 
-const dDe=D.findings.de, dCh=D.findings.ch;
+const dDe=D.findings.de, dAt=D.findings.at, dCh=D.findings.ch;
 new Chart(document.getElementById('delta'),{type:'bar',data:{labels:['Wasserkraft gesamt','Laufwasser','Speicherwasser','Pumpspeicher'],datasets:[
   {label:'DE 2026 ggü. 2017–25',data:[dDe.delta_pct,dDe.ror_delta_pct,dDe.res_delta_pct,dDe.ps_delta_pct],backgroundColor:C.de},
+  {label:'AT 2026 ggü. 2017–25',data:[dAt.delta_pct,dAt.ror_delta_pct,dAt.res_delta_pct,dAt.ps_delta_pct],backgroundColor:C.at},
   {label:'CH 2026 ggü. 2017–25',data:[dCh.delta_pct,dCh.ror_delta_pct,dCh.res_delta_pct,dCh.ps_delta_pct],backgroundColor:C.ch}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'% Abweichung'}}}}});
 
-new Chart(document.getElementById('de_daily'),{type:'line',data:{datasets:dailySmooth('de','hydro',[2026,2025,2024,2023,2018])},
-  options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
-new Chart(document.getElementById('ch_daily'),{type:'line',data:{datasets:dailySmooth('ch','hydro',[2026,2025,2024,2023,2018])},
-  options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
+new Chart(document.getElementById('de_daily'),{type:'line',data:{labels:dailyLabels('de'),datasets:dailySmooth('de','hydro',[2026,2025,2024,2023,2018])},
+  options:{plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12,autoSkip:true}},y:{title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
+new Chart(document.getElementById('at_daily'),{type:'line',data:{labels:dailyLabels('at'),datasets:dailySmooth('at','hydro',[2026,2025,2024,2023,2018])},
+  options:{plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12,autoSkip:true}},y:{title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
+new Chart(document.getElementById('ch_daily'),{type:'line',data:{labels:dailyLabels('ch'),datasets:dailySmooth('ch','hydro',[2026,2025,2024,2023,2018])},
+  options:{plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12,autoSkip:true}},y:{title:{display:true,text:'GWh/Tag (7-Tage-Mittel)'}}}}});
 
 function splitChart(cc,id){
   const months=['06','07','08'], lab=['Juni','Juli','August'];
@@ -294,12 +313,18 @@ function splitChart(cc,id){
   new Chart(document.getElementById(id),{data:{labels:lab,datasets:ds},
     options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'GWh je Monat'}}}}});
 }
-splitChart('de','de_split'); splitChart('ch','ch_split');
+splitChart('de','de_split'); splitChart('at','at_split'); splitChart('ch','ch_split');
 
 new Chart(document.getElementById('de_ps'),{type:'bar',data:{labels:Y,datasets:[
   {label:'Erzeugung',data:D.de.ps.ps_generation_gwh,backgroundColor:C.ps},
   {label:'Pumpstrom (Verbrauch)',data:D.de.ps.ps_pumping_gwh,backgroundColor:C.neg},
   {label:'Netto',data:D.de.ps.ps_net_gwh,backgroundColor:'#8ede92'}]},
+  options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'GWh'}}}}});
+
+new Chart(document.getElementById('at_ps'),{type:'bar',data:{labels:Y,datasets:[
+  {label:'Erzeugung',data:D.at.ps.ps_generation_gwh,backgroundColor:C.ps},
+  {label:'Pumpstrom (Verbrauch)',data:D.at.ps.ps_pumping_gwh,backgroundColor:C.neg},
+  {label:'Netto',data:D.at.ps.ps_net_gwh,backgroundColor:'#8ede92'}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'GWh'}}}}});
 
 new Chart(document.getElementById('ch_ps'),{type:'bar',data:{labels:Y,datasets:[
@@ -310,14 +335,28 @@ new Chart(document.getElementById('ch_ps'),{type:'bar',data:{labels:Y,datasets:[
 // profiles
 const hours=[...Array(24).keys()];
 const deGenCur=D.de.ps_hourly['DE_generation_2026']||[], dePumpCur=D.de.ps_hourly['DE_pumping_2026']||[];
-function meanPrev(kind){const arrs=Object.keys(D.de.ps_hourly).filter(k=>k.startsWith('DE_'+kind)&&!k.endsWith('2026')).map(k=>D.de.ps_hourly[k]);
+function meanPrev(cc,kind){const CC=cc.toUpperCase();const arrs=Object.keys(D[cc].ps_hourly).filter(k=>k.startsWith(CC+'_'+kind)&&!k.endsWith('2026')).map(k=>D[cc].ps_hourly[k]);
   if(!arrs.length)return null;return hours.map(h=>{const v=arrs.map(a=>a[h]).filter(x=>x!=null);return v.length?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null})}
 new Chart(document.getElementById('de_profile'),{type:'line',data:{labels:hours,datasets:[
   {label:'Erzeugung 2026',data:deGenCur,borderColor:C.ps,backgroundColor:'transparent',tension:.3},
-  {label:'Erzeugung 2017–25 (Ø)',data:meanPrev('generation'),borderColor:C.ps+'88',borderDash:[5,4],backgroundColor:'transparent',tension:.3},
+  {label:'Erzeugung 2017–25 (Ø)',data:meanPrev('de','generation'),borderColor:C.ps+'88',borderDash:[5,4],backgroundColor:'transparent',tension:.3},
   {label:'Pumpstrom 2026',data:dePumpCur,borderColor:C.neg,backgroundColor:'transparent',tension:.3},
-  {label:'Pumpstrom 2017–25 (Ø)',data:meanPrev('pumping'),borderColor:C.neg+'88',borderDash:[5,4],backgroundColor:'transparent',tension:.3}]},
+  {label:'Pumpstrom 2017–25 (Ø)',data:meanPrev('de','pumping'),borderColor:C.neg+'88',borderDash:[5,4],backgroundColor:'transparent',tension:.3}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{x:{title:{display:true,text:'Tagesstunde (Ortszeit)'}},y:{title:{display:true,text:'mittlere Leistung, MW'}}}}});
+
+const atGenCur=D.at.ps_hourly['AT_generation_2026']||[], atPumpCur=D.at.ps_hourly['AT_pumping_2026']||[];
+new Chart(document.getElementById('at_profile'),{type:'line',data:{labels:hours,datasets:[
+  {label:'Erzeugung 2026',data:atGenCur,borderColor:C.ps,backgroundColor:'transparent',tension:.3},
+  {label:'Erzeugung 2017–25 (Ø)',data:meanPrev('at','generation'),borderColor:C.ps+'88',borderDash:[5,4],backgroundColor:'transparent',tension:.3},
+  {label:'Pumpstrom 2026',data:atPumpCur,borderColor:C.neg,backgroundColor:'transparent',tension:.3},
+  {label:'Pumpstrom 2017–25 (Ø)',data:meanPrev('at','pumping'),borderColor:C.neg+'88',borderDash:[5,4],backgroundColor:'transparent',tension:.3}]},
+  options:{plugins:{legend:{position:'bottom'}},scales:{x:{title:{display:true,text:'Tagesstunde (Ortszeit)'}},y:{title:{display:true,text:'mittlere Leistung, MW'}}}}});
+
+new Chart(document.getElementById('dach_price'),{type:'line',data:{labels:hours,datasets:[
+  {label:'DE-LU 2026',data:D.de.price_hourly['2026'],borderColor:C.de,backgroundColor:'transparent',tension:.3},
+  {label:'AT 2026',data:D.at.price_hourly['2026'],borderColor:C.at,backgroundColor:'transparent',tension:.3},
+  {label:'CH 2026',data:D.ch.price_hourly['2026'],borderColor:C.ch,backgroundColor:'transparent',tension:.3}]},
+  options:{plugins:{legend:{position:'bottom'}},scales:{x:{title:{display:true,text:'Tagesstunde (Ortszeit)'}},y:{title:{display:true,text:'EUR/MWh'}}}}});
 
 new Chart(document.getElementById('de_price_profile'),{type:'line',data:{labels:hours,datasets:[
   {label:'2026',data:D.de.price_hourly['2026'],borderColor:C.de,backgroundColor:'transparent',tension:.3},
@@ -340,6 +379,8 @@ new Chart(document.getElementById('de_regime'),{type:'line',data:{labels:Y,datas
   {label:'DE · Pumpen 10–16 Uhr, %',data:D.de.ps.pump_share_midday_10_15_pct,borderColor:C.neg,backgroundColor:'transparent',tension:.2},
   {label:'DE · Erzeugung 17–24 Uhr, %',data:D.de.ps.gen_share_evening_17_23_pct,borderColor:C.ps,backgroundColor:'transparent',tension:.2},
   {label:'DE · Erzeugung 0–6 Uhr, %',data:D.de.ps.gen_share_night_0_5_pct,borderColor:C.de,borderDash:[4,3],backgroundColor:'transparent',tension:.2},
+  {label:'AT · Pumpen 10–16 Uhr, %',data:D.at.ps.pump_share_midday_10_15_pct,borderColor:C.at,backgroundColor:'transparent',tension:.2},
+  {label:'AT · Erzeugung 17–24 Uhr, %',data:D.at.ps.gen_share_evening_17_23_pct,borderColor:C.at,borderDash:[7,3],backgroundColor:'transparent',tension:.2},
   {label:'CH · Erzeugung 17–24 Uhr, %',data:D.ch.ps.gen_share_evening_17_23_pct,borderColor:C.ch,borderDash:[7,3],backgroundColor:'transparent',tension:.2}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'% der Sommermenge'}}}}});
 
@@ -352,13 +393,15 @@ document.getElementById('narrative').innerHTML=D.narrative;
 if(D.flow_rows && D.flow_rows.length){
   new Chart(document.getElementById('flows'),{type:'bar',data:{labels:Y,datasets:[
     {label:'DE',data:D.flows.de.net_import_gwh,backgroundColor:C.de},
+    {label:'AT',data:D.flows.at.net_import_gwh,backgroundColor:C.at},
     {label:'CH',data:D.flows.ch.net_import_gwh,backgroundColor:C.ch}]},
     options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'GWh (positiv = Import)'}}}}});
   new Chart(document.getElementById('flows_pct'),{type:'line',data:{labels:Y,datasets:[
     {label:'DE',data:D.flows.de.net_as_pct_of_load,borderColor:C.de,backgroundColor:'transparent',tension:.2},
+    {label:'AT',data:D.flows.at.net_as_pct_of_load,borderColor:C.at,backgroundColor:'transparent',tension:.2},
     {label:'CH',data:D.flows.ch.net_as_pct_of_load,borderColor:C.ch,backgroundColor:'transparent',tension:.2}]},
     options:{plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'% des Verbrauchs'}}}}});
-  table('tbl_flow', D.flow_rows, [{k:'country',l:'Land'},{k:'year',l:'Jahr',d:0},{k:'import_gwh',l:'Import'},{k:'export_gwh',l:'Export'},{k:'net_import_gwh',l:'Netto'},{k:'net_as_pct_of_load',l:'Netto, % Verbrauch'}]);
+  table('tbl_flow', D.flow_rows, [{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'import_gwh',l:'Import'},{k:'export_gwh',l:'Export'},{k:'net_import_gwh',l:'Netto'},{k:'net_as_pct_of_load',l:'Netto, % Verbrauch'}]);
 }else{document.querySelectorAll('[id=flows],[id=flows_pct]').forEach(e=>e.closest('.card').remove());document.getElementById('tbl_flow').closest('.scroll').remove()}
 
 // KPI cards
@@ -367,31 +410,34 @@ function kpi(label,val,delta,unit){
   return `<div class="kpi"><div class="l">${label}</div><div class="v">${fmt(val,unit==='%'?1:0)}${unit?' '+unit:''}</div>${d}</div>`}
 document.getElementById('kpis').innerHTML=[
  kpi('DE · Wasserkraft Sommer',dDe.hydro_total,dDe.delta_pct,'GWh'),
+ kpi('AT · Wasserkraft Sommer',dAt.hydro_total,dAt.delta_pct,'GWh'),
  kpi('CH · Wasserkraft Sommer',dCh.hydro_total,dCh.delta_pct,'GWh'),
  kpi('DE · WK-Anteil an Last',dDe.share_of_load,null,'%'),
+ kpi('AT · WK-Anteil an Last',dAt.share_of_load,null,'%'),
  kpi('CH · WK-Anteil an Last',dCh.share_of_load,null,'%'),
+ kpi('AT · PSW-Erzeugung',byrow('at','ps_generation_gwh'),dAt.ps_delta_pct,'GWh'),
  kpi('DE · PSW-Erzeugung',byrow('de','ps_generation_gwh'),dDe.ps_delta_pct,'GWh'),
  kpi('DE · PSW-Nettobilanz',byrow('de','ps_net_gwh'),null,'GWh')].join('');
 function byrow(cc,key){const i=Y.indexOf(CUR);return D[cc].ps[key]?D[cc].ps[key][i]:null}
 
 document.getElementById('caveats').innerHTML=`<b>Methode und Datengrenzen.</b>
-Sommer = 1. Juni – 31. August in Ortszeit; 15-Minuten-Reihen (DE) und Stundenwerte (CH) zu GWh Erzeugung integriert.
-Deutschland weist <span class="tag">hydro_pumped_storage</span> (Erzeugung) und <span class="tag">hydro_pumped_storage_consumption</span> (Pumpbetrieb) getrennt aus, daher sind für Deutschland Pumpstrom, Nettobilanz und der Kreislaufwirkungsgrad berechenbar.
+Sommer = 1. Juni – 31. August in Ortszeit; 15-Minuten-Reihen (DE, AT) und Stundenwerte (CH) zu GWh Erzeugung integriert.
+Deutschland und Österreich weisen <span class="tag">hydro_pumped_storage</span> (Erzeugung) und <span class="tag">hydro_pumped_storage_consumption</span> (Pumpbetrieb) getrennt aus, daher sind für diese Länder Pumpstrom, Nettobilanz und der Kreislaufwirkungsgrad berechenbar – für Österreich bleibt die Verbrauchsseite jedoch unvollständig (der scheinbare Wirkungsgrad liegt in allen zehn Jahren über 100 %, Pumpstrom ist dort eine Untergrenze).
 Für die Schweiz enthält die API v2 keine separate PSW-Verbrauchsserie – die Analyse des Pumpbetriebs ist eingeschränkt (siehe Spalte „Bilanzierung“).
-Preismetriken: Day-ahead (Gebotszone DE-LU bzw. CH), bezogen auf die Stunden mit Erzeugung bzw. Pumpen, ohne Regelenergie, Netzverluste und Verträge – ein <i>theoretischer</i> Orientierungswert, nicht der tatsächliche Erlös.`;
+Preismetriken: Day-ahead (Gebotszonen DE-LU, AT, CH; AT und DE-LU sind seit Oktober 2018 getrennt, daher Preise dort erst ab 2019), bezogen auf die Stunden mit Erzeugung bzw. Pumpen, ohne Regelenergie, Netzverluste und Verträge – ein <i>theoretischer</i> Orientierungswert, nicht der tatsächliche Erlös.`;
 
 // tables
 function table(el, rows, cols, label){
   const t=document.getElementById(el);
   t.innerHTML='<thead><tr>'+cols.map(c=>'<th>'+c.l+'</th>').join('')+'</tr></thead><tbody>'+
-   rows.slice().sort((a,b)=>b.year-a.year).map(r=>'<tr class="'+(r.year===CUR?'cur':'')+'">'+
-     cols.map((c,i)=>'<td>'+(i===0?r[c.k]:fmt(r[c.k],c.d==null?1:c.d))+'</td>').join('')+'</tr>').join('');
+   rows.slice().sort((a,b)=> (a.country&&b.country&&a.country!==b.country)? a.country.localeCompare(b.country) : b.year-a.year).map(r=>'<tr class="'+(r.year===CUR?'cur':'')+'">'+
+     cols.map((c,i)=>'<td>'+(c.raw||i===0?r[c.k]:fmt(r[c.k],c.d==null?1:c.d))+'</td>').join('')+'</tr>').join('');
 }
-const hydroCols=[{k:'year',l:'Jahr',d:0},{k:'hydro_total_gwh',l:'Wasserkraft, GWh'},{k:'run_of_river_gwh',l:'Laufwasser'},{k:'reservoir_gwh',l:'Speicherwasser'},{k:'pumped_gwh',l:'Pumpspeicher'},{k:'load_gwh',l:'Verbrauch, GWh'},{k:'hydro_share_of_load_pct',l:'WK/Last %'},{k:'renewable_share_of_load_pct',l:'EE/Last %'},{k:'hydro_capacity_mw',l:'Leistung MW',d:0},{k:'hydro_flh',l:'Benutzungsstd.'},{k:'intervals',l:'n',d:0},{k:'hydro_cov',l:'Abdeckung %',d:1}];
-table('tbl_hydro', D.hydro_rows.de.concat(D.hydro_rows.ch).sort((a,b)=>a.country.localeCompare(b.country)||b.year-a.year), hydroCols);
-const psCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',d:0},{k:'ps_generation_gwh',l:'Erzeugung'},{k:'ps_pumping_gwh',l:'Pumpstrom'},{k:'ps_net_gwh',l:'Netto'},{k:'round_trip_eff_pct',l:'Wirkungsgrad %'},{k:'ps_gen_full_load_hours',l:'Benutzungsstd.'},{k:'ps_peak_generation_mw',l:'Spitze Erzg. MW',d:0},{k:'ps_max_pumping_mw',l:'Spitze Pumpen MW',d:0},{k:'intervals_with_generation_pct',l:'Std. mit Erzg., %'},{k:'gen_hours_in_peak_8_20_pct',l:'Erzg. 8–20 Uhr %'},{k:'pump_hours_in_night_22_6_pct',l:'Pumpen 22–6 Uhr %'},{k:'price_mean_eur_mwh',l:'Preis Ø'},{k:'capture_spread_eur_mwh',l:'Spread'},{k:'da_arbitrage_value_meur',l:'Arbitrage, Mio.'},{k:'ps_capacity_mw',l:'Leistung MW',d:0},{k:'pump_share_midday_10_15_pct',l:'Pumpen 10–16 Uhr %'},{k:'gen_share_evening_17_23_pct',l:'Erzg. 17–24 Uhr %'},{k:'pump_at_negative_price_gwh',l:'Pumpen bei neg. Preis'},{k:'gen_share_of_price_top_decile_pct',l:'Erzg. oberes Dezil %'},{k:'days_with_both_modes_pct',l:'Tage mit beiden Modi %'},{k:'max_daily_generation_gwh',l:'max. Tageserzg. GWh'},{k:'reporting',l:'Bilanzierung'}];
-table('tbl_ps', D.ps_rows.de.concat(D.ps_rows.ch), psCols);
-const priceCols=[{k:'country',l:'Gebotszone'},{k:'year',l:'Jahr',d:0},{k:'price_mean',l:'Mittel'},{k:'price_median',l:'Median'},{k:'price_min',l:'Min'},{k:'price_max',l:'Max'},{k:'daily_spread_mean',l:'Spread/Tag'},{k:'daily_spread_p90',l:'Spread p90'},{k:'neg_hours_pct',l:'neg. Stunden %'}];
+const hydroCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'hydro_total_gwh',l:'Wasserkraft, GWh'},{k:'run_of_river_gwh',l:'Laufwasser'},{k:'reservoir_gwh',l:'Speicherwasser'},{k:'pumped_gwh',l:'Pumpspeicher'},{k:'load_gwh',l:'Verbrauch, GWh'},{k:'hydro_share_of_load_pct',l:'WK/Last %'},{k:'renewable_share_of_load_pct',l:'EE/Last %'},{k:'hydro_capacity_mw',l:'Leistung MW',d:0},{k:'hydro_flh',l:'Benutzungsstd.'},{k:'intervals',l:'n',raw:1},{k:'hydro_cov',l:'Abdeckung %',d:1}];
+table('tbl_hydro', ['de','at','ch'].flatMap(c=>D.hydro_rows[c]).sort((a,b)=>a.country.localeCompare(b.country)||b.year-a.year), hydroCols);
+const psCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'ps_generation_gwh',l:'Erzeugung'},{k:'ps_pumping_gwh',l:'Pumpstrom'},{k:'ps_net_gwh',l:'Netto'},{k:'round_trip_eff_pct',l:'Wirkungsgrad %'},{k:'ps_gen_full_load_hours',l:'Benutzungsstd.'},{k:'ps_peak_generation_mw',l:'Spitze Erzg. MW',d:0},{k:'ps_max_pumping_mw',l:'Spitze Pumpen MW',d:0},{k:'intervals_with_generation_pct',l:'Std. mit Erzg., %'},{k:'gen_hours_in_peak_8_20_pct',l:'Erzg. 8–20 Uhr %'},{k:'pump_hours_in_night_22_6_pct',l:'Pumpen 22–6 Uhr %'},{k:'price_mean_eur_mwh',l:'Preis Ø'},{k:'capture_spread_eur_mwh',l:'Spread'},{k:'da_arbitrage_value_meur',l:'Arbitrage, Mio.'},{k:'ps_capacity_mw',l:'Leistung MW',d:0},{k:'pump_share_midday_10_15_pct',l:'Pumpen 10–16 Uhr %'},{k:'gen_share_evening_17_23_pct',l:'Erzg. 17–24 Uhr %'},{k:'pump_at_negative_price_gwh',l:'Pumpen bei neg. Preis'},{k:'gen_share_of_price_top_decile_pct',l:'Erzg. oberes Dezil %'},{k:'days_with_both_modes_pct',l:'Tage mit beiden Modi %'},{k:'max_daily_generation_gwh',l:'max. Tageserzg. GWh'},{k:'reporting',l:'Bilanzierung'}];
+table('tbl_ps', ['de','at','ch'].flatMap(c=>D.ps_rows[c]), psCols);
+const priceCols=[{k:'country',l:'Gebotszone'},{k:'year',l:'Jahr',raw:1},{k:'price_mean',l:'Mittel'},{k:'price_median',l:'Median'},{k:'price_min',l:'Min'},{k:'price_max',l:'Max'},{k:'daily_spread_mean',l:'Spread/Tag'},{k:'daily_spread_p90',l:'Spread p90'},{k:'neg_hours_pct',l:'neg. Stunden %'}];
 table('tbl_price', D.price_rows, priceCols);
 </script></body></html>
 """

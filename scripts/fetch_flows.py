@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Supplementary download: cross-border physical flows (cbpf) for DE and CH summers.
+"""Supplementary download: cross-border physical flows (cbpf) for DACH summers.
 
 Reuses the HTTP/backoff logic from fetch_data.py.
 """
@@ -13,11 +13,11 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fetch_data import API, NoData, http_get, prune, summers  # noqa: E402
+from fetch_data import API, COUNTRIES, NoData, http_get, prune, summers  # noqa: E402
 
 RAW = Path(__file__).resolve().parents[1] / "data" / "raw"
 
-KEEP = ["sum", "austria", "france", "italy", "germany", "czechia", "denmark", "poland", "slovenia", "norway", "sweden", "netherlands", "belgium", "great britain", "united kingdom"]
+KEEP = ["sum", "austria", "switzerland", "france", "italy", "germany", "czechia", "denmark", "poland", "slovenia", "norway", "sweden", "netherlands", "belgium", "great britain", "united kingdom"]
 
 
 def main() -> int:
@@ -26,7 +26,7 @@ def main() -> int:
     RAW.mkdir(parents=True, exist_ok=True)
     got = skipped = missing = 0
     for y, start, end in summers(rng):
-        for country in ("de", "ch"):
+        for country in COUNTRIES:
             path = RAW / f"cbpf_{country}_{y}.json.gz"
             if path.exists() and path.stat().st_size > 2000:
                 skipped += 1

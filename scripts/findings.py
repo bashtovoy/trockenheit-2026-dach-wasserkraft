@@ -36,12 +36,12 @@ def index_by_year(records):
 
 
 def build(summary) -> str:
-    hy = {c: index_by_year(summary[f"{c}_hydro"]) for c in ("de", "ch")}
-    ps = {c: index_by_year(summary[f"{c}_ps"]) for c in ("de", "ch")}
+    hy = {c: index_by_year(summary[f"{c}_hydro"]) for c in ("de", "at", "ch")}
+    ps = {c: index_by_year(summary[f"{c}_ps"]) for c in ("de", "at", "ch")}
     pr = {c: index_by_year([r for r in summary["prices"] if r["country"] == c.upper()])
-          for c in ("de", "ch")}
+          for c in ("de", "at", "ch")}
     fl = {c: index_by_year([r for r in summary.get("flows", []) if r["country"] == c.upper()])
-          for c in ("de", "ch")}
+          for c in ("de", "at", "ch")}
 
     def v(tab, c, y, key, default=None):
         row = tab[c].get(y)
@@ -95,21 +95,68 @@ def build(summary) -> str:
         f"({num(de26['hydro_total_gwh']-de_hyd_mean, 0, sign=True)} GWh) wurde von Wind und Solar "
         f"aufgefangen. Ein solcher Puffer existiert in der Schweiz nicht.")
 
-    # ---- 3. Schweiz -------------------------------------------------------
+    # ---- 3. Oesterreich ---------------------------------------------------
+    at26 = hy["at"][CUR]
+    at_hyd_mean = mean_of(summary["at_hydro"], "hydro_total_gwh", BASE)
+    at_ror_mean = mean_of(summary["at_hydro"], "run_of_river_gwh", BASE)
+    at_res_mean = mean_of(summary["at_hydro"], "reservoir_gwh", BASE)
+    at_share_mean = mean_of(summary["at_hydro"], "hydro_share_of_load_pct", BASE)
+    at_rank = sorted((r["hydro_total_gwh"] for r in summary["at_hydro"]), reverse=True).index(
+        at26["hydro_total_gwh"]) + 1
+    items.append(
+        f"<b>Österreich hat den stärksten Rückgang im DACH-Raum: {num(at26['hydro_total_gwh'])} GWh, "
+        f"{pct(100*(at26['hydro_total_gwh']/at_hyd_mean-1))} gegenüber dem Mittel 2017–2025</b> – "
+        f"Platz {at_rank} von zehn Jahren. Anders als in der Schweiz trifft es hier zuerst das "
+        f"Laufwasser: {num(at26['run_of_river_gwh'])} GWh statt {num(at_ror_mean)} GWh im Mittel "
+        f"({pct(100*(at26['run_of_river_gwh']/at_ror_mean-1))}); Speicherwasser "
+        f"{num(at26['reservoir_gwh'])} GWh statt {num(at_res_mean)} GWh "
+        f"({pct(100*(at26['reservoir_gwh']/at_res_mean-1))}). Weil die Wasserkraft in einem Normalsommer "
+        f"{num(at_share_mean,0)}{THIN}% der österreichischen Last gedeckt hätte, fiel ihr Anteil auf "
+        f"{num(at26['hydro_share_of_load_pct'],0)}{THIN}% – der tiefste Wert der zehn Jahre.")
+
+    # ---- 3b. Schweiz ------------------------------------------------------
     ch26 = hy["ch"][CUR]
     ch_hyd_mean = mean_of(summary["ch_hydro"], "hydro_total_gwh", BASE)
     ch_res_mean = mean_of(summary["ch_hydro"], "reservoir_gwh", BASE)
     ch_ror_mean = mean_of(summary["ch_hydro"], "run_of_river_gwh", BASE)
     ch_wet = max((r for r in summary["ch_hydro"] if r["year"] < CUR), key=lambda r: r["reservoir_gwh"])
     items.append(
-        f"<b>Die Schweiz war deutlich stärker betroffen: {num(ch26['hydro_total_gwh'])} GWh, "
+        f"<b>Die Schweiz war fast ebenso stark betroffen: {num(ch26['hydro_total_gwh'])} GWh, "
         f"{pct(100*(ch26['hydro_total_gwh']/ch_hyd_mean-1))} gegenüber dem Mittel und "
         f"{pct(d100(hy,'ch',CUR,'hydro_total_gwh',2025))} gegenüber Sommer 2025</b> – der schlechteste "
         f"Sommer der zehn Jahre. Der Rückgang traf die Speicherwasserkraft, also den "
         f"steuerbaren Bestand: {num(ch26['reservoir_gwh'])} GWh statt {num(ch_res_mean)} GWh im Mittel "
         f"({pct(100*(ch26['reservoir_gwh']/ch_res_mean-1))}); im Rekordjahr {ch_wet['year']} waren es "
-        f"{num(ch_wet['reservoir_gwh'])} GWh). Laufwasser fiel moderater aus "
+        f"{num(ch_wet['reservoir_gwh'])} GWh. Laufwasser fiel moderater aus "
         f"({pct(100*(ch26['run_of_river_gwh']/ch_ror_mean-1))}).")
+
+    # ---- 3c. Der Alpenraum als Ganzes ------------------------------------
+    reg = {y: sum(v(hy, c, y, "hydro_total_gwh") or 0 for c in ("de", "at", "ch"))
+           for y in BASE + [CUR]}
+    reg_mean = sum(mean_of(summary[f"{c}_hydro"], "hydro_total_gwh", BASE) for c in ("de", "at", "ch"))
+    reg_res = {y: sum(v(hy, c, y, "reservoir_gwh") or 0 for c in ("de", "at", "ch"))
+               for y in BASE + [CUR]}
+    reg_res_mean = sum(mean_of(summary[f"{c}_hydro"], "reservoir_gwh", BASE) for c in ("de", "at", "ch"))
+    reg_ps = sum(v(ps, c, CUR, "ps_generation_gwh") or 0 for c in ("de", "at", "ch"))
+    reg_ps_mean = sum(mean_of(summary[f"{c}_ps"], "ps_generation_gwh", BASE) for c in ("de", "at", "ch"))
+    low_share = sum(1 for c in ("de", "at", "ch")
+                    if hy[c][CUR].get("hydro_share_of_load_pct") is not None
+                    and hy[c][CUR]["hydro_share_of_load_pct"]
+                    <= min((x["hydro_share_of_load_pct"] for x in summary[f"{c}_hydro"]
+                            if x["year"] != CUR and x.get("hydro_share_of_load_pct") is not None),
+                           default=9e9))
+    items.append(
+        f"<b>Der Alpenraum als Ganzes:</b> DE + AT + CH erzeugten im Sommer 2026 zusammen "
+        f"{num(reg[CUR])} GWh Wasserkraft gegenüber {num(reg_mean)} GWh im Mittel "
+        f"({pct(100*(reg[CUR]/reg_mean-1))}) – es fehlen {num(reg_mean-reg[CUR])} GWh. Der eigentliche "
+        f"Befund ist die Gleichzeitigkeit: in {low_share} der drei Länder – Österreich und die Schweiz – "
+        f"war der Wasserkraftanteil an der Last so tief wie nie im Jahrzehnt. Die Trockenheit war kein "
+        f"nationales, sondern ein alpines Ereignis. Am deutlichsten wird das beim steuerbaren Wasser – die "
+        f"Speicherwasserkraft "
+        f"der drei Länder zusammen lieferte nur {num(reg_res[CUR])} GWh statt {num(reg_res_mean)} GWh "
+        f"({pct(100*(reg_res[CUR]/reg_res_mean-1))}), also rund die Hälfte des üblichen Sommerbeitrags. "
+        f"Die Pumpspeicher des Raums hielten ihre Menge dagegen: {num(reg_ps)} GWh Erzeugung gegenüber "
+        f"{num(reg_ps_mean)} GWh im Mittel ({pct(100*(reg_ps/reg_ps_mean-1))}).")
 
     # ---- 4. Schweiz: Bilanz-Folge ----------------------------------------
     ch26m = [m for m in summary["ch_monthly"] if m["year"] == CUR]
@@ -135,9 +182,18 @@ def build(summary) -> str:
                 f"{num(v(fl,'de',2025,'net_import_gwh'))} GWh 2025 und "
                 f"{num(mean_of(de_fl,'net_import_gwh',[2023,2024]))} GWh 2023–2024: die hohe Wind- und "
                 f"Solarerzeugung deckte teilweise sowohl das Wasserkraft-Defizit als auch den Import.")
+    at_fl = [r for r in summary.get("flows", []) if r["country"] == "AT"]
+    if at_fl and CUR in index_by_year(at_fl):
+        txt += (f" Österreich wechselte auf {num(v(fl,'at',CUR,'net_import_gwh'),0)} GWh "
+                f"({pct(v(fl,'at',CUR,'net_as_pct_of_load'),1)} vom Verbrauch; Mittel "
+                f"{num(mean_of(at_fl,'net_import_gwh',BASE),0)} GWh) – bei einem Wasserkraftanteil von nur "
+                f"{num(at26['hydro_share_of_load_pct'],0)}{THIN}% die physische Antwort auf die Frage, "
+                f"wohin das fehlende Speicherwasser geflossen ist.")
     items.append(txt)
 
     # ---- 5. Preise --------------------------------------------------------
+    ch_at = v(pr, "ch", CUR, "price_mean") - v(pr, "at", CUR, "price_mean")
+    ch_at_word = "über" if ch_at >= 0 else "unter"
     items.append(
         f"<b>Die Preise bildeten die Trockenheit ab:</b> Day-ahead-Sommermittel 2026 – "
         f"{num(v(pr,'de',CUR,'price_mean'))} EUR/MWh in DE-LU ({pct(d100(pr,'de',CUR,'price_mean',2025))} "
@@ -145,8 +201,16 @@ def build(summary) -> str:
         f"({pct(d100(pr,'ch',CUR,'price_mean',2025))}). Die mittlere tägliche Tag/Nacht-Spread betrug in "
         f"Deutschland {num(v(pr,'de',CUR,'daily_spread_mean'))} EUR/MWh (2025: "
         f"{num(v(pr,'de',2025,'daily_spread_mean'))}) – der höchste Wert seit der Energiekrise 2022; "
-        f"in der Schweiz {num(v(pr,'ch',CUR,'daily_spread_mean'))} gegenüber "
-        f"{num(v(pr,'ch',2025,'daily_spread_mean'))} EUR/MWh.")
+        f"Österreich {num(v(pr,'at',CUR,'daily_spread_mean'))} und in der Schweiz "
+        f"{num(v(pr,'ch',CUR,'daily_spread_mean'))} EUR/MWh. Die 2018 getrennten Preiszonen notieren "
+        f"wieder auseinander: AT {num(v(pr,'at',CUR,'price_mean'))} gegen "
+        f"{num(v(pr,'de',CUR,'price_mean'))} EUR/MWh in DE-LU "
+        f"({num(v(pr,'at',CUR,'price_mean')-v(pr,'de',CUR,'price_mean'),1)} EUR/MWh Abstand, 2025: "
+        f"{num(v(pr,'at',2025,'price_mean')-v(pr,'de',2025,'price_mean'),1)}), die Schweiz "
+        f"{num(abs(ch_at),1)} EUR/MWh {ch_at_word} AT. Stunden mit "
+        f"negativen Preisen: DE-LU {num(v(pr,'de',CUR,'neg_hours_pct'),1)}{THIN}%, AT "
+        f"{num(v(pr,'at',CUR,'neg_hours_pct'),1)}{THIN}%, CH "
+        f"{num(v(pr,'ch',CUR,'neg_hours_pct'),1)}{THIN}%.")
 
     # ---- 6. Pumpspeicher DE: Mengen --------------------------------------
     items.append(
@@ -160,6 +224,26 @@ def build(summary) -> str:
         f"und Zuflüsse in das Oberwasser mit einfließen. Benutzungsstunden der Erzeugung: "
         f"{num(v(ps,'de',CUR,'ps_gen_full_load_hours'))} h im Sommer bei "
         f"{num(v(ps,'de',CUR,'ps_capacity_mw')/1000,1)} GW installierter Leistung.")
+
+    # ---- 6b. Oesterreich: Pumpspeicher und Datenqualitaet ----------------
+    at_rt = [r["round_trip_eff_pct"] for r in summary["at_ps"] if r.get("round_trip_eff_pct")]
+    items.append(
+        f"<b>Österreichs Pumpspeicher: die Erzeugung ist sauber messbar, der Pumpstrom nicht.</b> "
+        f"Erzeugung {num(v(ps,'at',CUR,'ps_generation_gwh'))} GWh "
+        f"({pct(d100(ps,'at',CUR,'ps_generation_gwh',2025))} gegenüber 2025, Mittel "
+        f"{num(mean_of(summary['at_ps'],'ps_generation_gwh',BASE))} GWh) bei "
+        f"{num(v(ps,'at',CUR,'ps_gen_full_load_hours'))} Benutzungsstunden und "
+        f"{num(v(ps,'at',CUR,'ps_capacity_mw')/1000,1)} GW installierter Leistung. Der ausgewiesene "
+        f"Pumpstrom von {num(v(ps,'at',CUR,'ps_pumping_gwh'))} GWh ergibt einen scheinbaren "
+        f"Kreislaufwirkungsgrad von {num(v(ps,'at',CUR,'round_trip_eff_pct'),0)}{THIN}% – der tiefste Wert "
+        f"sogar in allen zehn Jahren ({num(min(at_rt),0)}{THIN}%). Werte über 100{THIN}% sind "
+        f"physikalisch unmöglich: Die Serie "
+        f"<span class='tag'>hydro_pumped_storage_consumption</span> deckt in Österreich offenbar nur "
+        f"einen Teil der Anlagen ab. Pumpstrom, Nettobilanz, Wirkungsgrad und Arbitragewert sind für AT "
+        f"daher Untergrenzen und nicht mit den deutschen Werten vergleichbar; Tagesgang und "
+        f"Erzeugungsstruktur bleiben aussagekräftig – und die zeigt denselben Abendtrend "
+        f"({num(mean_of(summary['at_ps'],'gen_share_evening_17_23_pct',[2017,2018,2019]),0)}{THIN}% → "
+        f"{num(v(ps,'at',CUR,'gen_share_evening_17_23_pct'),0)}{THIN}% in 17:00–24:00 Uhr).")
 
     # ---- 7. Deutschland: Betriebsregime ----------------------------------
     early = [2017, 2018, 2019]
@@ -214,15 +298,17 @@ def build(summary) -> str:
         f"<span class='tag'>hydro_pumped_storage_consumption</span>. Pumpbetrieb, Nettobilanz, "
         f"Kreislaufwirkungsgrad und Arbitragewert der Schweizer Pumpspeicher lassen sich daher nicht "
         f"berechnen – verfügbar sind nur die Erzeugung und ihre Stundengliederung. Für Deutschland sind "
-        f"beide Betriebsweisen enthalten.")
+        f"beide Betriebsweisen enthalten, für Österreich beide Reihen – dort aber die Verbrauchsseite "
+        f"unvollständig (siehe oben).")
 
     items.append(
         f"<b>Technische Anmerkungen:</b> für Deutschland ist die Pumpstrom-Serie 2017 offenbar zu "
         f"niedrig berichtet (scheinbarer „Wirkungsgrad“ 138{THIN}%); Regime-Vergleiche sind ab 2018–2019 "
-        f"belastbar. Day-ahead-Preise für DE-LU enthält die API erst ab 2019, für CH ab 2017. Die "
+        f"belastbar. Day-ahead-Preise für DE-LU und AT enthält die API erst ab 2019 – seit der "
+        f"Zonenteilung von DE-LU/AT im Oktober 2018 –, für die Schweiz ab 2017. Die "
         f"installierte Pumpspeicherleistung der Schweiz springt 2022 von 2,56 auf 3,48 GW "
         f"(Neufassung Anlagenkatalog), was die Benutzungsstunden vor und nach diesem Stichtag "
-        f"beeinflusst. Sommerfenster: 01.06.–31.08. Lokalzeit, Integration von 15-Minuten- (DE) und "
+        f"beeinflusst. Sommerfenster: 01.06.–31.08. Lokalzeit, Integration von 15-Minuten- (DE, AT) und "
         f"Stundenwerten (CH); alle Wirtschaftlichkeitsangaben sind theoretische Day-ahead-Werte ohne "
         f"Regelenergie, Netzverluste und Verträge.")
 

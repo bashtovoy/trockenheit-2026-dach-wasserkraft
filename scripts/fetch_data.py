@@ -38,7 +38,7 @@ def _ssl_context() -> ssl.SSLContext:
         return ssl.create_default_context()
 
 # Series kept per dataset. Note: CH public_power has no pumped-storage
-# consumption series, DE does.
+# consumption series, DE and AT do.
 KEEP_PRODUCTION = {
     "de": [
         "load",
@@ -48,6 +48,16 @@ KEEP_PRODUCTION = {
         "hydro_pumped_storage_consumption",
         "wind_onshore",
         "wind_offshore",
+        "solar",
+        "renewable_share_of_load",
+    ],
+    "at": [
+        "load",
+        "hydro_run_of_river",
+        "hydro_water_reservoir",
+        "hydro_pumped_storage",
+        "hydro_pumped_storage_consumption",
+        "wind_onshore",
         "solar",
         "renewable_share_of_load",
     ],
@@ -63,10 +73,14 @@ KEEP_PRODUCTION = {
     ],
 }
 
-PRICE_BZN = {"de": "DE-LU", "ch": "CH"}
+# DACH / Alpine region, in report order.
+COUNTRIES = ("de", "at", "ch")
+
+PRICE_BZN = {"de": "DE-LU", "at": "AT", "ch": "CH"}
 
 KEEP_CAPACITY = {
     "de": ["hydro", "hydro_pumped_storage", "wind_onshore", "wind_offshore", "solar_ac", "load"],
+    "at": ["hydro", "hydro_pumped_storage", "wind_onshore", "solar_dc", "solar_ac", "load"],
     "ch": ["hydro", "hydro_pumped_storage", "wind_onshore", "solar_dc", "load"],
 }
 
@@ -173,21 +187,21 @@ def main() -> int:
 
     jobs: list[tuple[str, str, str, dict, list[str]]] = []
     for y, start, end in summers(years):
-        for country in ("de", "ch"):
+        for country in COUNTRIES:
             jobs.append((
                 "production", "public_power", country,
                 {"country": country, "start": start, "end": end},
                 KEEP_PRODUCTION[country],
             ))
     for y, start, end in summers(years):
-        for country in ("de", "ch"):
+        for country in COUNTRIES:
             jobs.append((
                 "price", "price", country,
                 {"bzn": PRICE_BZN[country], "start": start, "end": end},
                 ["day_ahead_price"],
             ))
 
-    for country in ("de", "ch"):
+    for country in COUNTRIES:
         jobs.append((
             "capacity", "installed_power", country,
             {"country": country, "start": "2000-01-01", "end": "2026-09-30",

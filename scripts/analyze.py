@@ -4,8 +4,8 @@
 Outputs (in output/):
   hydro_summer_<country>.csv    one row per year: GWh by hydro category + shares
   hydro_monthly_<country>.csv   GWh per month per year
-  ps_summer_de.csv              pumped-storage operation metrics (DE: gen + pumping)
-  ps_summer_ch.csv              pumped-storage operation metrics (CH)
+  ps_summer_<country>.csv       pumped-storage metrics; DE and AT have a separate
+                                pumping series, CH only generation (flagged in `reporting`)
   hourly_profiles.csv           mean MW by hour of day, per year, for PS/hydro
   price_summer.csv              day-ahead price statistics per summer
   summary.json                  machine-readable summary used by the report
@@ -26,6 +26,8 @@ OUT = ROOT / "output"
 
 CURRENT_YEAR = 2026
 BASE_FIRST = 2017  # first year of the comparison window
+COUNTRIES = ("de", "at", "ch")            # DACH, in report order
+COUNTRIES_UPPER = ("DE", "AT", "CH")
 HYDRO_COLS = ["hydro_run_of_river", "hydro_water_reservoir", "hydro_pumped_storage"]
 MONTH_ABBR = {6: "jun", 7: "jul", 8: "aug"}
 
@@ -287,7 +289,7 @@ def price_frame(country: str, year: int) -> pd.Series | None:
 
 def price_table() -> pd.DataFrame:
     rows = []
-    for country in ("de", "ch"):
+    for country in COUNTRIES:
         for year in range(BASE_FIRST, CURRENT_YEAR + 1):
             p = price_frame(country, year)
             if p is None:
@@ -432,7 +434,7 @@ def ps_hourly_profile(country: str) -> pd.DataFrame:
 def flows_table() -> pd.DataFrame:
     """Net cross-border position per summer, GWh (positive = net import)."""
     rows = []
-    for country in ("de", "ch"):
+    for country in COUNTRIES:
         for year in range(BASE_FIRST, CURRENT_YEAR + 1):
             got = load("cbpf", country, year)
             if got is None:
@@ -454,7 +456,7 @@ def flows_table() -> pd.DataFrame:
     if df.empty:
         return df
     loads = []
-    for country in ("DE", "CH"):
+    for country in COUNTRIES_UPPER:
         hy = pd.read_csv(OUT / f"hydro_summer_{country.lower()}.csv")[["year", "load_gwh"]]
         hy["country"] = country
         loads.append(hy)
@@ -468,7 +470,7 @@ def main() -> None:
     summary: dict = {"generated_from": "energy-charts.info API v2", "summer_window": "06-01..08-31"}
     profiles = []
 
-    for country in ("de", "ch"):
+    for country in COUNTRIES:
         yearly, monthly, prof = hydro_table(country)
         yearly.to_csv(OUT / f"hydro_summer_{country}.csv", index=False)
         monthly.to_csv(OUT / f"hydro_monthly_{country}.csv", index=False)
@@ -486,7 +488,7 @@ def main() -> None:
     prices.to_csv(OUT / "price_summer.csv", index=False)
     summary["prices"] = prices.to_dict(orient="records")
 
-    for country in ("de", "ch"):
+    for country in COUNTRIES:
         daily = daily_series(country)
         if not daily.empty:
             daily.to_csv(OUT / f"daily_{country}.csv", index=False)
