@@ -53,6 +53,32 @@ def build(summary) -> str:
 
     items: list[str] = []
 
+    # ---- 0. Natuerliche Wasserkraft als Duerre-Massstab -------------------
+    # Pumpspeicher haengen nicht vom Abfluss ab (Speicher, der zuerst Strom
+    # aufnimmt). Fuer das TROCKENHEITssignal zaehlt Laufwasser + Speicherwasser;
+    # PSW werden separat ausgewiesen.
+    def nat(rec):
+        return (rec.get("run_of_river_gwh") or 0) + (rec.get("reservoir_gwh") or 0)
+    nat_cur = {c: nat(hy[c][CUR]) for c in ("de", "at", "ch")}
+    nat_mean = {c: sum(nat(r) for r in summary[f"{c}_hydro"] if r["year"] in BASE) / len(BASE)
+                for c in ("de", "at", "ch")}
+    nat_delta = {c: 100 * (nat_cur[c] / nat_mean[c] - 1) for c in ("de", "at", "ch")}
+    dach_nat_cur = sum(nat_cur.values())
+    dach_nat_mean = sum(nat_mean.values())
+    de_nat_rank = sorted(nat(r) for r in summary["de_hydro"]).index(nat(hy["de"][CUR])) + 1
+    items.append(
+        f"<b>Der Maßstab für die Trockenheit: die natürliche Wasserkraft.</b> Pumpspeicher sind kein "
+        f"vom Abfluss abhängiger Erzeuger, sondern ein Speicher, der zuerst Strom aufnimmt; für das "
+        f"Dürresignal zählt daher Laufwasser + Speicherwasser, die Pumpspeicher werden separat "
+        f"ausgewiesen. Auf dieser Basis fiel die natürliche Wasserkraft im DACH-Raum von "
+        f"{num(dach_nat_mean)} auf {num(dach_nat_cur)} GWh "
+        f"({pct(100*(dach_nat_cur/dach_nat_mean-1))}) – rund ein Drittel. Alle drei Länder lagen "
+        f"gleichzeitig auf dem tiefsten Stand des Jahrzehnts: DE {pct(nat_delta['de'])}, AT "
+        f"{pct(nat_delta['at'])}, CH {pct(nat_delta['ch'])}. In Deutschland wurde dieser Einbruch durch "
+        f"eine überdurchschnittliche Pumpspeicher-Erzeugung überdeckt, die den Gesamt-Wasserkraftwert "
+        f"auf nur {pct(100*(v(hy,'de',CUR,'hydro_total_gwh')/mean_of(summary['de_hydro'],'hydro_total_gwh',BASE)-1))} "
+        f"sinken ließ – die PSW-Menge maskiert also den eigentlichen Wassermangel.")
+
     # ---- 1. Deutschland: Wasserkraft --------------------------------------
     de26 = hy["de"][CUR]
     de_hyd_mean = mean_of(summary["de_hydro"], "hydro_total_gwh", BASE)
@@ -73,7 +99,10 @@ def build(summary) -> str:
         f"{num(de26['reservoir_gwh'])} GWh statt {num(de_res_mean)} GWh ({pct(de_res_delta)}); der "
         f"prozentuale Rückgang ist grösser als beim Laufwasser, obwohl die absolute Menge klein bleibt. "
         f"Man muss also zwischen dem dominanten Verlust in GWh (Laufwasser) und der tieferen prozentualen "
-        f"Senkung (Speicherwasser) unterscheiden.")
+        f"Senkung (Speicherwasser) unterscheiden. Rechnet man die Pumpspeicher heraus, erreichte auch "
+        f"Deutschland bei Lauf- und Speicherwasser den tiefsten Sommerwert der zehn Jahre (Platz "
+        f"{de_nat_rank} von 10) – der scheinbar milde Rückgang des Gesamtwerts ist also im Kern der "
+        f"hohen PSW-Erzeugung geschuldet, nicht einem milden Wasserangebot.")
 
     # ---- 2. Verlauf innerhalb des Sommers ---------------------------------
     m26 = sorted((m for m in summary["de_monthly"] if m["year"] == CUR), key=lambda r: r["month"])
@@ -97,7 +126,11 @@ def build(summary) -> str:
         f"Wasserkraft deckt in DE nur "
         f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% des Verbrauchs, ihr Fehlbetrag "
         f"({num(de26['hydro_total_gwh']-de_hyd_mean, 0, sign=True)} GWh) wurde von Wind und Solar "
-        f"aufgefangen. Ein solcher Puffer existiert in der Schweiz nicht.")
+        f"aufgefangen. In der Schweiz war dieser Puffer deutlich kleiner, aber nicht null: Auch dort "
+        f"stieg die Solarproduktion sprunghaft auf {num(v(hy,'ch',CUR,'solar_gwh'))} GWh statt "
+        f"{num(mean_of(summary['ch_hydro'],'solar_gwh',BASE))} GWh im Mittel und fing einen Teil des "
+        f"Wasserkraftdefizits auf – doch weil die Wasserkraft dort über die Hälfte der Last deckt und "
+        f"Wind kaum zunahm, blieb der relative Fehlbetrag grösser als in Deutschland.")
 
     # ---- 3. Oesterreich ---------------------------------------------------
     at26 = hy["at"][CUR]
@@ -157,8 +190,10 @@ def build(summary) -> str:
         f"war der Wasserkraftanteil an der Last so tief wie nie im Jahrzehnt, und das auf einem Niveau, "
         f"das trotzdem weit über Deutschland liegt: AT {num(hy['at'][CUR]['hydro_share_of_load_pct'],0)}{THIN}% "
         f"und CH {num(hy['ch'][CUR]['hydro_share_of_load_pct'],0)}{THIN}% gegenüber nur "
-        f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% in DE. Die Trockenheit war kein "
-        f"nationales, sondern ein alpines Ereignis. Am deutlichsten wird das beim steuerbaren Wasser – die "
+        f"{num(hy['de'][CUR]['hydro_share_of_load_pct'],1)}{THIN}% in DE. Die Daten zeigen ein "
+        f"gleichzeitig auftretendes Wasserkraftdefizit in allen drei Ländern – ein überregionales "
+        f"hydrologisches Signal im DACH-Raum; ob es ein einheitliches Witterungsereignis war, lässt sich "
+        f"aus den Erzeugungsdaten allein nicht abschliessend belegen. Am deutlichsten wird das beim steuerbaren Wasser – die "
         f"Speicherwasserkraft "
         f"der drei Länder zusammen lieferte nur {num(reg_res[CUR])} GWh statt {num(reg_res_mean)} GWh "
         f"({pct(100*(reg_res[CUR]/reg_res_mean-1))}), also rund die Hälfte des üblichen Sommerbeitrags. "
@@ -279,8 +314,10 @@ def build(summary) -> str:
         f"Erzeugungsstunden übersteigt den in Pumpstunden um "
         f"{num(v(ps,'de',CUR,'capture_spread_eur_mwh'),1)} EUR/MWh (2019: "
         f"{num(v(ps,'de',2019,'capture_spread_eur_mwh'),1)}; 2025: "
-        f"{num(v(ps,'de',2025,'capture_spread_eur_mwh'),1)}), der theoretische Wert der Preisdifferenz über "
-        f"den Sommer {num(v(ps,'de',CUR,'da_arbitrage_value_meur'))} Mio. EUR (2025: "
+        f"{num(v(ps,'de',2025,'capture_spread_eur_mwh'),1)}), der theoretische Bruttoerlös aus der "
+        f"Day-ahead-Spread – eine ex-post-Marge auf dem beobachteten Pump- und Erzeugungsprofil, ohne "
+        f"Kosten, Netzverluste, Regelenergie und Verträge – betrug über den Sommer "
+        f"{num(v(ps,'de',CUR,'da_arbitrage_value_meur'))} Mio. EUR (2025: "
         f"{num(v(ps,'de',2025,'da_arbitrage_value_meur'))}). Auf Stunden mit negativen Preisen entfielen "
         f"{num(v(ps,'de',CUR,'pump_at_negative_price_gwh'))} GWh Pumpstrom "
         f"({num(100*v(ps,'de',CUR,'pump_at_negative_price_gwh')/v(ps,'de',CUR,'ps_pumping_gwh'),0)}{THIN}% "
