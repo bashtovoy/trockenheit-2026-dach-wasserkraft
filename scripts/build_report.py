@@ -262,7 +262,7 @@ li{margin:4px 0}
 <h2>5. Meteorologisch → Wasserbilanz → Energie – unabhängige Einordnung (ERA5)</h2>
 <div class="note">Die bisherigen Abschnitte messen Trockenheit <i>energiestatistisch</i> über die Wasserkrafterzeugung. Hier wird das Signal mit <b>unabhängigen Wetterdaten</b> abgeglichen: ERA5-Tageswerte (2&nbsp;m-<b>Temperatur</b>, <b>Niederschlag</b>, <b>Globstrahlung</b>, <b>ET₀</b> nach FAO-56) über ein <b>alpin fokussiertes Raster</b> repräsentativer Zellen je Land (unkewichtetes Mittel der Rasterzellen, <i>keine</i> echte Einzugsgebiets-Wichtung) – Quelle <b>open-meteo.com / Copernicus CDS (ERA5)</b>, nicht energy-charts. Kernstück ist die <b>Sommerwasserbilanz D&nbsp;=&nbsp;Niederschlag&nbsp;−&nbsp;ET₀</b> über Juni–August: Temperatur und Strahlung gehen als <i>verdunstungswirksame Nachfrage</i> (ET₀) ein, statt als zwei grobe Einzelproxi zu gelten. D ist ein <b>meteorologischer Wasserbilanz-Proxy</b> für den atmosphärischen Wasserhaushalt (ET₀ = Referenzverdunstung gut bewässerter Grasfläche), <i>nicht</i> die tatsächliche Beckenabfluss-Bilanz – zwischen P−ET₀ und Abfluss liegen im Alpenraum Schnee-/Gletscher- und Boden-/Grundwasserspeicher. D wird gegen die feste <b>Klimanormal 1991–2020</b> standardisiert (&laquo;Saisonaler Wasserbilanz-Index <b>Z_JJA</b>&raquo;; μ/σ aus den 30&nbsp;<i>Sommer-Summen</i> 1991–2020; &lt;&nbsp;0&nbsp;=&nbsp;Defizit) – <b>bewusst kein SPEI</b>, da keine log-logistic-Wahrscheinlichkeitstransformation. Die Referenz für die <i>Energieanomalie</i> bleibt 2017–2025, weil energy-charts keine frühere Erzeugung führt. Ausgewiesen werden <b>Pearson r und Spearman ρ</b> mit zweiseitigem p. Es ist eine <b>explorative Korrelation, kein Kausalnachweis</b>; die p-Werte sind <b>nicht auf Mehrfachvergleiche adjustiert</b>, die Jahresreihe umfasst nur <b>10 aufeinanderfolgende Sommer</b> (explorativ; mögliche Inter-Jahres-Autokorrelation wird nicht modelliert). D zeigt die <b>stärkste beobachtete bivariate Kopplung</b> unter den untersuchten Größen – als zusammengesetzter Wert (P&nbsp;−&nbsp;ET₀) belegt das aber <i>keine ursächliche Dominanz</i> gegenüber Temperatur oder Niederschlag. <b>Monatsanomalien</b> sind binnen einer Saison nicht unabhängig (Juni–August&nbsp;+ Autokorrelation); deshalb wird zusätzlich ein <b>Year-Block-Permutationstest (p_B)</b> ausgewiesen, der ganze Sommer vertauscht statt einzelner Monate (er prüft die Austauschbarkeit vollständiger Jahresblöcke, modelliert aber keine Inter-Jahres-Abhängigkeit).</div>
 <div class="grid">
-  <div class="card"><h3>Saisonaler Wasserbilanz-Index Z_JJA (D&nbsp;=&nbsp;P−ET₀, ggü. 1991–2020) vs. natürliche Wasserkraft (% des Ländermittels 2017–26)</h3><div class="cbody"><canvas id="wx_scatter"></canvas></div></div>
+  <div class="card"><h3>Saisonaler Wasserbilanz-Index Z_JJA (D&nbsp;=&nbsp;P−ET₀, ggü. 1991–2020) vs. natürliche Wasserkraft (% des Energie-Basismittels 2017–25)</h3><div class="cbody"><canvas id="wx_scatter"></canvas></div></div>
   <div class="card" style="display:block"><h3>Kernbefund</h3><div id="wx_takeaway" class="note" style="margin:0"></div></div>
 </div>
 <h3>Korrelationen mit der Wasserkraft (r&nbsp;=&nbsp;Pearson, ρ&nbsp;=&nbsp;Spearman, p&nbsp;=&nbsp;Student-t, p_B&nbsp;=&nbsp;Year-Block-Permutation bei Monatsanomalie)</h3>
@@ -512,7 +512,7 @@ if(D.weather){
   const wxC={de:C.de,at:C.at,ch:C.ch};
   const fmtnum=v=>(v==null||isNaN(v))?'–':((v>=0?'+':'')+v.toFixed(2).replace('.',','));
   const fmt_p=p=>(p==null||isNaN(p))?'–':(p<0.001?'<0,001':p.toFixed(3).replace('.',','));
-  // Scatter: Wasserbilanz-Index z(D=P−ET0) vs. natürliche WK (% des Ländermittels)
+  // Scatter: Z_JJA (D=P−ET0) vs. natürliche WK (% des Energie-Basismittels 2017–25)
   const wxDs=['de','at','ch'].map(c=>{
     const d=D.weather.annual_corr[c].D;
     return{label:wxNames[c]+' (r='+fmtnum(d.r)+')',
@@ -527,7 +527,7 @@ if(D.weather){
         return(pt?'Jahr '+pt.year:'')+': Bilanz '+fmtnum(ctx.parsed.x)+'σ, WK '+ctx.parsed.y.toFixed(1)+' %';
       }}}},
       scales:{x:{title:{display:true,text:'Z_JJA: Wasserbilanz D = P−ET₀, standardisiert ggü. 1991–2020  ◀ trockener'},grid:{color:'#e6e6e6'}},
-              y:{title:{display:true,text:'Natürliche Wasserkraft, % des Ländermittels 2017–26'},grid:{color:'#e6e6e6'}}}}});
+              y:{title:{display:true,text:'Natürliche Wasserkraft, % des Energie-Basismittels 2017–25'},grid:{color:'#e6e6e6'}}}}});
 
   // Korrelations-Tabelle: r (Pearson), rho (Spearman), p_B (Year-Block-Permutation bei Monatsanomalie)
   const varLabels={t:'2 m-Temperatur → natürl. WK',p:'Niederschlag → natürl. WK',rad:'Globstrahlung → natürl. WK',et0:'ET₀ (Verdunstung) → natürl. WK',D:'Wasserbilanz D = P−ET₀ → natürl. WK',D_ror:'Wasserbilanz D → Laufwasser (abflussnah)',spring_p:'Frühlings-N (Mär–Mai) → Sommer-WK',D_m:'Wasserbilanz D → natürl. WK'};

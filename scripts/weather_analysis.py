@@ -60,6 +60,7 @@ OUT = ROOT / "output"
 
 COUNTRIES = ("de", "at", "ch")
 ANALYSIS_YEARS = list(range(2017, 2027))   # hydro generation available
+ENERGY_BASELINE_YEARS = list(range(2017, 2026))  # 2017-2025 norm for hydro % index
 BASELINE_YEARS = list(range(1991, 2021))   # fixed WMO climate normal
 SUMMER = (6, 7, 8)
 SPRING = (3, 4, 5)
@@ -388,11 +389,14 @@ def compute(summary: dict) -> dict:
             res["p_block"] = round(pb, 4) if pb is not None else None
             monthly[c][wv] = res
 
-    # ---- scatter: Wasserbilanz-Index z(D) vs natural hydro (% of analysis mean) ----
+    # ---- scatter: Z_JJA (standardized D) vs natural hydro (% of 2017-2025 energy baseline) ----
     scatter = {}
     for c in COUNTRIES:
         ys = [y for y in ANALYSIS_YEARS if y in summer[c] and y in hann[c]]
-        base_h = [hann[c][y]["natural"] for y in ys if hann[c].get(y, {}).get("natural")]
+        # denominator = energy baseline mean (2017-2025), so the 2026 point is
+        # compared to a norm that does NOT itself include 2026
+        base_h = [hann[c][y]["natural"] for y in ENERGY_BASELINE_YEARS
+                  if hann[c].get(y, {}).get("natural")]
         mh = st.mean(base_h) if base_h else None
         bD = baseline[c]["D"]
         pts = []
@@ -430,6 +434,7 @@ def compute(summary: dict) -> dict:
         "window": "summer 06-01..08-31; antecedent 03-01..05-31",
         "climate_baseline": "1991-2020 (WMO reference period)",
         "energy_baseline": "2017-2025 (Energy-Charts hydro record; no earlier data)",
+        "hydro_index_baseline": "scatter y = % of 2017-2025 natural-hydro mean (energy baseline; 2026 excluded from its own norm)",
         "index_def": "Saisonaler Wasserbilanz-Index Z_JJA = ((P-ET0)_Jun-Aug - mu_JJA(1991-2020))/sigma_JJA(1991-2020); <0 = Defizit. Bewusst KEIN SPEI (keine log-logistic-Wahrscheinlichkeitstransformation).",
         "grain_note": "annual = raw summer values (n=10 consecutive summers, exploratory - inter-annual autocorrelation not modeled); monthly = within-month anomalies -> p_block from a year-block permutation test (blocks exchangeable whole summers; Student-t p assumes independence and is optimistic here)",
         "years": ys_all,

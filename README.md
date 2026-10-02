@@ -103,7 +103,9 @@ Wichtigste Befunde:
   WMO-Normal) für die Standardisierung der Wettervariablen zu z-Werten / dem **Saisonalen
   Wasserbilanz-Index Z_JJA** (μ/σ aus den 30 *Sommer-Summen*, nicht aus Einzelmonaten); (2)
   **Energiebasis 2017–2025** für die Erzeugungsanomalie, weil energy-charts keine frühere
-  Erzeugungsreihe führt. Diese Asymmetrie ist Absicht und dokumentiert. Es wird bewusst **kein echter
+  Erzeugungsreihe führt. Diese Asymmetrie ist Absicht und dokumentiert. Auch die y-Achse des
+  Scatter-Diagramms (% natürliche Wasserkraft) bezieht sich auf das **2017–2025**-Mittel, damit der
+  Punkt 2026 nicht gegen eine Norm gesetzt wird, die 2026 selbst enthält. Es wird bewusst **kein echter
   SPEI** gerechnet (keine log-logistic-Anpassung/Wahrscheinlichkeitstransformation).
 * **Zwei Korrelations-Körner:** (1) **jährlich** über zehn aufeinanderfolgende Sommer (n = 10;
   wegen der kurzen Zeitreihe nur **explorativ** – Inter-Jahres-Autokorrelation wird nicht modelliert);
