@@ -67,10 +67,12 @@ def build(summary) -> str:
     dach_nat_mean = sum(nat_mean.values())
     de_nat_rank = sorted(nat(r) for r in summary["de_hydro"]).index(nat(hy["de"][CUR])) + 1
     items.append(
-        f"<b>Der Maßstab für die Trockenheit: die natürliche Wasserkraft.</b> Pumpspeicher sind kein "
+        f"<b>Der energiestatistische Maßstab für die Trockenheit: die natürliche Wasserkraft.</b> Pumpspeicher sind kein "
         f"vom Abfluss abhängiger Erzeuger, sondern ein Speicher, der zuerst Strom aufnimmt; für das "
         f"Dürresignal zählt daher Laufwasser + Speicherwasser, die Pumpspeicher werden separat "
-        f"ausgewiesen. Auf dieser Basis fiel die natürliche Wasserkraft im DACH-Raum von "
+        f"ausgewiesen. Dies ist ein Indikator für die <i>energetische Wirkung</i> des Wasserdefizits, kein "
+        f"meteorologischer Dürreindex – die Speicherwasser-Erzeugung hängt neben dem Zufluss auch von "
+        f"Speicherstand und Bewirtschaftung ab. Auf dieser Basis fiel die natürliche Wasserkraft im DACH-Raum von "
         f"{num(dach_nat_mean)} auf {num(dach_nat_cur)} GWh "
         f"({pct(100*(dach_nat_cur/dach_nat_mean-1))}) – rund ein Drittel. Alle drei Länder lagen "
         f"gleichzeitig auf dem tiefsten Stand des Jahrzehnts: DE {pct(nat_delta['de'])}, AT "
@@ -301,7 +303,7 @@ def build(summary) -> str:
         f"sogar in allen zehn Jahren ({num(min(at_rt),0)}{THIN}%). Werte über 100{THIN}% sind "
         f"physikalisch unmöglich: Die Serie "
         f"<span class='tag'>hydro_pumped_storage_consumption</span> deckt in Österreich offenbar nur "
-        f"einen Teil der Anlagen ab. Pumpstrom, Nettobilanz, Wirkungsgrad und Arbitragewert sind für AT "
+        f"einen Teil der Anlagen ab. Pumpstrom, Nettobilanz, Wirkungsgrad und Day-ahead-Bruttowert sind für AT "
         f"daher Untergrenzen und nicht mit den deutschen Werten vergleichbar; Tagesgang und "
         f"Erzeugungsstruktur bleiben aussagekräftig – und die zeigt denselben Abendtrend "
         f"({num(mean_of(summary['at_ps'],'gen_share_evening_17_23_pct',[2017,2018,2019]),0)}{THIN}% → "
@@ -325,7 +327,7 @@ def build(summary) -> str:
 
     # ---- 8. Deutschland: Wirtschaftlichkeit ------------------------------
     items.append(
-        f"<b>Die Arbitrage-Ökonomie: nicht das Preisniveau, sondern die Spread zählte.</b> Der "
+        f"<b>Die Day-ahead-Spread-Ökonomie: nicht das Preisniveau, sondern die Spread zählte.</b> Der "
         f"Day-ahead-Mittelpreis 2026 ({num(v(pr,'de',CUR,'price_mean'))} EUR/MWh) lag klar unter dem "
         f"Krisenjahr 2022 ({num(v(pr,'de',2022,'price_mean'))} EUR/MWh) und war der zweithöchste Wert der "
         f"verfügbaren Jahre seit 2019 – das Wachstum der PSW-Erzeugung folgte also nicht dem "
@@ -365,7 +367,7 @@ def build(summary) -> str:
     items.append(
         f"<b>Datengrenze (Schweiz):</b> die API v2 liefert für CH keine Serie "
         f"<span class='tag'>hydro_pumped_storage_consumption</span>. Pumpbetrieb, Nettobilanz, "
-        f"Kreislaufwirkungsgrad und Arbitragewert der Schweizer Pumpspeicher lassen sich daher nicht "
+        f"Kreislaufwirkungsgrad und Day-ahead-Bruttowert der Schweizer Pumpspeicher lassen sich daher nicht "
         f"berechnen – verfügbar sind nur die Erzeugung und ihre Stundengliederung. Für Deutschland sind "
         f"beide Betriebsweisen enthalten, für Österreich beide Reihen – dort aber die Verbrauchsseite "
         f"unvollständig (siehe oben).")

@@ -7,9 +7,13 @@ Pumpspeichersystems über alle drei Länder.
 
 Datenbasis: [energy-charts.info API v2](https://api.energy-charts.info/) (Fraunhofer ISE), Lizenz **CC BY 4.0**.
 
-**Dürre-Indikator:** die *natürliche Wasserkraft* = Laufwasser + Speicherwasser. Pumpspeicher (PSW)
-hängen nicht vom Abfluss ab – sie sind ein Speicher, der zuerst Strom aufnimmt – und werden daher
-getrennt ausgewiesen, statt das Trockenheitssignal zu maskieren.
+**Trockenheits-Indikator (energiestatistisch):** die *natürliche Wasserkraft* = Laufwasser +
+Speicherwasser. Pumpspeicher (PSW) hängen nicht vom Abfluss ab – sie sind ein Speicher, der zuerst
+Strom aufnimmt – und werden daher getrennt ausgewiesen, statt das Trockenheitssignal zu maskieren.
+Es ist ein Maß für die **energetische Wirkung** des Wasserdefizits, kein meteorologischer Dürreindex
+(die Speicherwasser-Erzeugung hängt neben dem Zufluss auch von Speicherstand und Bewirtschaftung ab).
+Alle Last-Anteile sind **energiegewichtet** (Σ Erzeugung / Σ Last), nicht das zeitliche Mittel der
+Intervall-Percentwerte.
 
 ## Datenstand und Reproduzierbarkeit
 
@@ -52,11 +56,11 @@ Wichtigste Befunde:
   schrumpfte auf 2 147 GWh gegenüber 4 175 GWh im Mittel.
 * **Deutschland**: 6 754 GWh gesamt (−15 %, Platz 9 von zehn), aber natürliche Wasserkraft −30,8 %
   (Tiefstwert, Platz 1 von 10) – der milde Gesamtwert ist der hohen PSW-Erzeugung geschuldet. Da
-  Wind (inkl. Offshore, 27 252 GWh) und Solar hoch liefen (EE-Anteil 67,8 %), war der bilanzielle
-  Druck gering; ein Ersatz des Defizits ist das aber nicht, denn Deutschland blieb Nettoimporteur.
+  Wind (inkl. Offshore, 27 252 GWh) und Solar hoch liefen (EE-Anteil 68,5 %, energiegewichtet), war der
+  bilanzielle Druck gering; ein Ersatz des Defizits ist das aber nicht, denn Deutschland blieb Nettoimporteur.
 * **Pumpspeicher**: Deutschland – Mengen nahe am Rekord (Erzeugung 2 819, Pumpstrom 3 635 GWh), aber
   **neues Betriebsregime**: Nacht-Pumpen 57 % → 4 %, Mittagspumpen (10–16 Uhr) 26 % → 71 %,
-  Abend-Erzeugung (17–24 Uhr) 52 % → 74 %. Capture-Spread 134,6 €/MWh, theoretischer Arbitragewert des
+  Abend-Erzeugung (17–24 Uhr) 52 % → 74 %. Capture-Spread 134,6 €/MWh, theoretischer Day-ahead-Bruttowert des
   Sommerzyklus ≈ 345 Mio. €. Derselbe Abendtrend in Österreich (50 % → 74 %) und der Schweiz (43 % → 58 %).
 * **Preise**: DE-LU 114,0 €/MWh, AT 124,2 €/MWh, CH 119,6 €/MWh (alle deutlich über 2025). Die 2018
   getrennten Preiszonen DE-LU und AT notieren wieder auseinander (AT +10,2 €/MWh über DE-LU).
@@ -110,8 +114,12 @@ der Cache in `data/raw/` erlaubt Abbruch und Fortsetzung ohne erneuten Download.
   leer.
 * Der Pumpstrom 2017 in Deutschland ist offenbar unvollständig (scheinbarer Wirkungsgrad > 100 %) –
   im Bericht mit `pumping_data_suspect` gekennzeichnet.
-* Der „Arbitragewert“ ist eine theoretische Day-ahead-Betrachtung ohne Wirkungsgradverluste,
-  Regelenergie und Rahmenverträge konkreter Anlagen.
+* Der „theoretische Day-ahead-Bruttowert“ (beobachtetes Pump-/Erzeugungsprofil) ist eine rein
+  theoretische Day-ahead-Betrachtung ohne Wirkungsgradverluste, Regelenergie, Netzengpässe,
+ Opportunitätskosten des Wassers, Bietstrategien und Rahmenverträge konkreter Anlagen – er ist nicht die
+  tatsächliche kommerzielle Rendite. Die 15-Minuten-Erzeugung wird dabei dem nächstliegenden
+  Stundenpreis zugeordnet; die Bruttowerte sind richtungsgebend, nicht auf die letzte Dezimalstelle
+  reproduzierbar.
 
 ## Datenlizenz
 

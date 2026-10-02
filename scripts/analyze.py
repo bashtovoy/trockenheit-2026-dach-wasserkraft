@@ -123,9 +123,15 @@ def hydro_table(country: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         row["run_of_river_share_pct"] = 100 * row["run_of_river_gwh"] / row["hydro_total_gwh"]
         row["reservoir_share_pct"] = 100 * row["reservoir_gwh"] / row["hydro_total_gwh"]
         row["pumped_share_pct"] = 100 * row["pumped_gwh"] / row["hydro_total_gwh"]
-        row["renewable_share_of_load_pct"] = float(
-            pd.to_numeric(df["renewable_share_of_load"], errors="coerce").mean()
-        ) if "renewable_share_of_load" in df else np.nan
+        # Energy-weighted renewable share = Σ renewable / Σ load (consistent with the
+        # hydro shares above), not the unweighted mean of per-interval percentages.
+        rs = (pd.to_numeric(df["renewable_share_of_load"], errors="coerce")
+              if "renewable_share_of_load" in df else pd.Series(np.nan, index=df.index))
+        m = rs.notna() & load_mw.notna()
+        if m.any() and float(load_mw[m].sum()) > 0:
+            row["renewable_share_of_load_pct"] = float((rs[m] * load_mw[m]).sum() / load_mw[m].sum())
+        else:
+            row["renewable_share_of_load_pct"] = float(rs.mean()) if rs.notna().any() else np.nan
         row["hydro_capacity_mw"] = installed_power(country, "hydro", year)
         # full-load hours for non-storage hydro (run-of-river + reservoir)
         row["hydro_flh"] = ((row["run_of_river_gwh"] + row["reservoir_gwh"]) * 1000 / row["hydro_capacity_mw"]

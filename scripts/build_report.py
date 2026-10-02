@@ -194,14 +194,14 @@ li{margin:4px 0}
 </style></head><body>
 <header>
 <h1>Wasserkraft und Pumpspeicherbetrieb im DACH-Raum – Deutschland, Österreich, Schweiz</h1>
-<p class="sub">Alpenraum / DACH · Sommersaison 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025 · Dürre-Indikator: <b>natürliche Wasserkraft (Laufwasser + Speicherwasser)</b>, Pumpspeicher getrennt · Quelle: <b>energy-charts.info API v2</b> (Fraunhofer ISE, CC BY 4.0) · Einheiten: GWh Erzeugung, Preise: Day-ahead in EUR/MWh</p>
+<p class="sub">Alpenraum / DACH · Sommersaison 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025 · Trockenheits-Indikator (energiestatistisch): <b>natürliche Wasserkraft (Laufwasser + Speicherwasser)</b>, Pumpspeicher getrennt · Quelle: <b>energy-charts.info API v2</b> (Fraunhofer ISE, CC BY 4.0) · Einheiten: GWh Erzeugung, Preise: Day-ahead in EUR/MWh</p>
 </header>
 <main>
 <div class="kpis" id="kpis"></div>
 <div class="note" id="caveats"></div>
 
-<h2>1. Natürliche Wasserkraft – der eigentliche Dürre-Indikator</h2>
-<div class="note">Pumpspeicherkraftwerke sind kein vom Zufluss abhängiger Erzeuger: Sie entnehmen dem Netz Strom und speisen ihn wirkungsgradbedingt wieder ein. Für das <b>Trockenheitssignal</b> zählt daher die <b>natürliche Wasserkraft = Laufwasser + Speicherwasser</b>; die Pumpspeicher werden in Abschnitt&nbsp;3 getrennt behandelt. <span class="tag">Laufwasser</span> <span class="tag">Speicherwasser</span> = natürlich &nbsp;·&nbsp; <span class="tag">Pumpspeicher</span> = Speicher.</div>
+<h2>1. Natürliche Wasserkraft – energiewirtschaftlicher Indikator der hydrologischen Trockenheitswirkung</h2>
+<div class="note">Pumpspeicherkraftwerke sind kein vom Zufluss abhängiger Erzeuger: Sie entnehmen dem Netz Strom und speisen ihn wirkungsgradbedingt wieder ein. Für das <b>Trockenheitssignal</b> zählt daher die <b>natürliche Wasserkraft = Laufwasser + Speicherwasser</b>; die Pumpspeicher werden in Abschnitt&nbsp;3 getrennt behandelt. <b>Einordnung:</b> Dies ist ein <i>energiestatistischer</i> Indikator – der aus dem Wasserdefizit resultierende Erzeugungsrückgang – und kein meteorologischer Dürreindex. Das Laufwasser bildet den aktuellen Abfluss unmittelbar ab; die Speicherwasser-<i>Erzeugung</i> hängt zusätzlich von Speicherstand, Bewirtschaftungsregime und Saisonalverschiebung ab. <span class="tag">Laufwasser</span> <span class="tag">Speicherwasser</span> = natürlich &nbsp;·&nbsp; <span class="tag">Pumpspeicher</span> = Speicher.</div>
 <div class="grid">
   <div class="card"><h3>Natürliche Wasserkraft (Laufwasser + Speicherwasser) je Sommer, GWh</h3><div class="cbody"><canvas id="nat_yearly"></canvas></div></div>
   <div class="card"><h3>Was die PSW-Menge verdeckt: Abweichung natürlich vs. gesamt, %</h3><div class="cbody"><canvas id="nat_mask"></canvas></div></div>
@@ -244,7 +244,7 @@ li{margin:4px 0}
 </div>
 <div class="grid">
   <div class="card"><h3>Deutschland: Benutzungsstunden der PSW und Wirkungsgrad</h3><div class="cbody"><canvas id="de_flh"></canvas></div></div>
-  <div class="card"><h3>Arbitrage-Ökonomie: Preisspread und theoretische DA-Marge</h3><div class="cbody"><canvas id="de_econ"></canvas></div></div>
+  <div class="card"><h3>Day-ahead-Spread-Ökonomie: Preisspread und theoretischer Bruttowert</h3><div class="cbody"><canvas id="de_econ"></canvas></div></div>
 </div>
 <div class="grid">
   <div class="card"><h3>Wandel des PSW-Betriebsregimes (DE · AT · CH): Pumpanteil 10–16 Uhr, Erzeugungsanteil 17–24 Uhr</h3><div class="cbody"><canvas id="de_regime"></canvas></div></div>
@@ -425,7 +425,7 @@ new Chart(document.getElementById('de_flh'),{type:'bar',data:{labels:Y,datasets:
 new Chart(document.getElementById('de_econ'),{type:'bar',data:{labels:Y,datasets:[
   {label:'Mittlerer Preis, EUR/MWh',data:D.de.ps.price_mean_eur_mwh,backgroundColor:C.price},
   {label:'Spread Erzeugung/Pumpen, EUR/MWh',data:D.de.ps.capture_spread_eur_mwh,type:'line',borderColor:C.ps,backgroundColor:'transparent',tension:.2,yAxisID:'y'},
-  {label:'Theor. Arbitragewert, Mio. EUR',data:D.de.ps.da_arbitrage_value_meur,type:'line',borderColor:C.ror,backgroundColor:'transparent',tension:.2,yAxisID:'y1'}]},
+  {label:'Theor. DA-Bruttowert, Mio. EUR',data:D.de.ps.da_arbitrage_value_meur,type:'line',borderColor:C.ror,backgroundColor:'transparent',tension:.2,yAxisID:'y1'}]},
   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'EUR/MWh'}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Mio. EUR'}}}}});
 
 new Chart(document.getElementById('de_regime'),{type:'line',data:{labels:Y,datasets:[
@@ -474,11 +474,12 @@ document.getElementById('kpis').innerHTML=[
 function byrow(cc,key){const i=Y.indexOf(CUR);return D[cc].ps[key]?D[cc].ps[key][i]:null}
 
 document.getElementById('caveats').innerHTML=`<b>Methode und Datengrenzen.</b>
-<b>Natürliche Wasserkraft</b> (Laufwasser + Speicherwasser) ist der Dürre-Indikator dieser Analyse, denn nur sie hängt vom Zufluss ab. Pumpspeicher werden getrennt behandelt (Abschnitt&nbsp;3), weil ihre Erzeugung dem Netz entnommene Energie verschiebt (Round-trip&nbsp;&lt;&nbsp;100&nbsp;%) und nicht vom Niederschlag bestimmt wird. „Wasserkraft gesamt“ enthält die Pumpspeicher und dient nur dem Vergleich mit der üblichen Statistik.
+<b>Natürliche Wasserkraft</b> (Laufwasser + Speicherwasser) ist der <i>energiestatistische</i> Indikator der hydrologischen Trockenheitswirkung – kein meteorologischer Dürreindex: Das Laufwasser folgt unmittelbar dem Abfluss, die Speicherwasser-Erzeugung hängt zusätzlich von Speicherstand und Bewirtschaftung ab. Pumpspeicher werden getrennt behandelt (Abschnitt&nbsp;3), weil ihre Erzeugung dem Netz entnommene Energie verschiebt (Round-trip&nbsp;&lt;&nbsp;100&nbsp;%) und nicht vom Niederschlag bestimmt wird. „Wasserkraft gesamt“ enthält die Pumpspeicher und dient nur dem Vergleich mit der üblichen Statistik.
+Alle Last-Anteile (Wasserkraft, natürliche Wasserkraft, erneuerbarer Anteil) sind <i>energiegewichtet</i>: Σ Erzeugung / Σ Last über den Sommer, nicht das zeitliche Mittel der Intervall-Percentwerte.
 Sommer = 1. Juni – 31. August in Ortszeit; 15-Minuten-Reihen (DE, AT) und Stundenwerte (CH) zu GWh Erzeugung integriert.
 Deutschland und Österreich weisen <span class="tag">hydro_pumped_storage</span> (Erzeugung) und <span class="tag">hydro_pumped_storage_consumption</span> (Pumpbetrieb) getrennt aus, daher sind für diese Länder Pumpstrom, Nettobilanz und der Kreislaufwirkungsgrad berechenbar – für Österreich bleibt die Verbrauchsseite jedoch unvollständig (der scheinbare Wirkungsgrad liegt in allen zehn Jahren über 100 %, Pumpstrom ist dort eine Untergrenze).
 Für die Schweiz enthält die API v2 keine separate PSW-Verbrauchsserie – die Analyse des Pumpbetriebs ist eingeschränkt (siehe Spalte „Bilanzierung“).
-Preismetriken: Day-ahead (Gebotszonen DE-LU, AT, CH; AT und DE-LU sind seit Oktober 2018 getrennt, daher Preise dort erst ab 2019), bezogen auf die Stunden mit Erzeugung bzw. Pumpen, ohne Regelenergie, Netzverluste und Verträge – ein <i>theoretischer</i> Orientierungswert, nicht der tatsächliche Erlös.`;
+Preismetriken: Day-ahead (Gebotszonen DE-LU, AT, CH; AT und DE-LU sind seit Oktober 2018 getrennt, daher Preise dort erst ab 2019), bezogen auf die Stunden mit Erzeugung bzw. Pumpen, ohne Regelenergie, Netzverluste und Verträge – ein <i>theoretischer</i> Orientierungswert („theoretischer Day-ahead-Bruttowert bei beobachtetem Pump-/Erzeugungsprofil“), nicht die tatsächliche kommerzielle Rendite einer konkreten Anlage. Zeitliche Zuordnung: Jedes 15-Minuten-Intervall der Erzeugungsreihe wird dem nächstliegenden Stundenpreis zugeordnet; die Bruttowerte sind dadurch richtungsgebend, nicht auf die letzte Dezimalstelle reproduzierbar.`;
 
 // tables
 function table(el, rows, cols, label){
@@ -489,7 +490,7 @@ function table(el, rows, cols, label){
 }
 const hydroCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'natural_gwh',l:'Natürliche WK, GWh'},{k:'hydro_total_gwh',l:'WK gesamt, GWh'},{k:'run_of_river_gwh',l:'Laufwasser'},{k:'reservoir_gwh',l:'Speicherwasser'},{k:'pumped_gwh',l:'Pumpspeicher'},{k:'load_gwh',l:'Verbrauch, GWh'},{k:'natural_share_of_load_pct',l:'natürl./Last %'},{k:'hydro_share_of_load_pct',l:'WK ges./Last %'},{k:'renewable_share_of_load_pct',l:'EE/Last %'},{k:'hydro_capacity_mw',l:'Leistung MW',d:0},{k:'hydro_flh',l:'Benutzungsstd.'},{k:'intervals',l:'n',raw:1},{k:'hydro_cov',l:'Abdeckung %',d:1}];
 table('tbl_hydro', ['de','at','ch'].flatMap(c=>D.hydro_rows[c]).sort((a,b)=>a.country.localeCompare(b.country)||b.year-a.year), hydroCols);
-const psCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'ps_generation_gwh',l:'Erzeugung'},{k:'ps_pumping_gwh',l:'Pumpstrom'},{k:'ps_net_gwh',l:'Netto'},{k:'round_trip_eff_pct',l:'Wirkungsgrad %'},{k:'ps_gen_full_load_hours',l:'Benutzungsstd.'},{k:'ps_peak_generation_mw',l:'Spitze Erzg. MW',d:0},{k:'ps_max_pumping_mw',l:'Spitze Pumpen MW',d:0},{k:'intervals_with_generation_pct',l:'Std. mit Erzg., %'},{k:'gen_hours_in_peak_8_20_pct',l:'Erzg. 8–20 Uhr %'},{k:'pump_hours_in_night_22_6_pct',l:'Pumpen 22–6 Uhr %'},{k:'price_mean_eur_mwh',l:'Preis Ø'},{k:'capture_spread_eur_mwh',l:'Spread'},{k:'da_arbitrage_value_meur',l:'Arbitrage, Mio.'},{k:'ps_capacity_mw',l:'Leistung MW',d:0},{k:'pump_share_midday_10_15_pct',l:'Pumpen 10–16 Uhr %'},{k:'gen_share_evening_17_23_pct',l:'Erzg. 17–24 Uhr %'},{k:'pump_at_negative_price_gwh',l:'Pumpen bei neg. Preis'},{k:'gen_share_of_price_top_decile_pct',l:'Erzg. oberes Dezil %'},{k:'days_with_both_modes_pct',l:'Tage mit beiden Modi %'},{k:'max_daily_generation_gwh',l:'max. Tageserzg. GWh'},{k:'reporting',l:'Bilanzierung'}];
+const psCols=[{k:'country',l:'Land'},{k:'year',l:'Jahr',raw:1},{k:'ps_generation_gwh',l:'Erzeugung'},{k:'ps_pumping_gwh',l:'Pumpstrom'},{k:'ps_net_gwh',l:'Netto'},{k:'round_trip_eff_pct',l:'Wirkungsgrad %'},{k:'ps_gen_full_load_hours',l:'Benutzungsstd.'},{k:'ps_peak_generation_mw',l:'Spitze Erzg. MW',d:0},{k:'ps_max_pumping_mw',l:'Spitze Pumpen MW',d:0},{k:'intervals_with_generation_pct',l:'Std. mit Erzg., %'},{k:'gen_hours_in_peak_8_20_pct',l:'Erzg. 8–20 Uhr %'},{k:'pump_hours_in_night_22_6_pct',l:'Pumpen 22–6 Uhr %'},{k:'price_mean_eur_mwh',l:'Preis Ø'},{k:'capture_spread_eur_mwh',l:'Spread'},{k:'da_arbitrage_value_meur',l:'DA-Bruttowert, Mio.'},{k:'ps_capacity_mw',l:'Leistung MW',d:0},{k:'pump_share_midday_10_15_pct',l:'Pumpen 10–16 Uhr %'},{k:'gen_share_evening_17_23_pct',l:'Erzg. 17–24 Uhr %'},{k:'pump_at_negative_price_gwh',l:'Pumpen bei neg. Preis'},{k:'gen_share_of_price_top_decile_pct',l:'Erzg. oberes Dezil %'},{k:'days_with_both_modes_pct',l:'Tage mit beiden Modi %'},{k:'max_daily_generation_gwh',l:'max. Tageserzg. GWh'},{k:'reporting',l:'Bilanzierung'}];
 table('tbl_ps', ['de','at','ch'].flatMap(c=>D.ps_rows[c]), psCols);
 const priceCols=[{k:'country',l:'Gebotszone'},{k:'year',l:'Jahr',raw:1},{k:'price_mean',l:'Mittel'},{k:'price_median',l:'Median'},{k:'price_min',l:'Min'},{k:'price_max',l:'Max'},{k:'daily_spread_mean',l:'Spread/Tag'},{k:'daily_spread_p90',l:'Spread p90'},{k:'neg_hours_pct',l:'neg. Stunden %'}];
 table('tbl_price', D.price_rows, priceCols);

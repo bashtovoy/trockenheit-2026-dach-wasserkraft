@@ -28,7 +28,7 @@
    "run_of_river_share_pct": 71.49048587584117,
    "reservoir_share_pct": 2.3901670837267823,
    "pumped_share_pct": 26.119347040432046,
-   "renewable_share_of_load_pct": 40.971388134057975,
+   "renewable_share_of_load_pct": 41.28871029757781,
    "hydro_capacity_mw": 5325.0,
    "hydro_flh": 1093.0993521126761
   },
@@ -58,7 +58,7 @@
    "run_of_river_share_pct": 68.51165630520559,
    "reservoir_share_pct": 6.47929076874609,
    "pumped_share_pct": 25.009052926048327,
-   "renewable_share_of_load_pct": 38.63748867753624,
+   "renewable_share_of_load_pct": 39.08127931994083,
    "hydro_capacity_mw": 5337.0,
    "hydro_flh": 933.9437464867904
   },
@@ -88,7 +88,7 @@
    "run_of_river_share_pct": 64.67252930284893,
    "reservoir_share_pct": 10.041073688957988,
    "pumped_share_pct": 25.28639700819309,
-   "renewable_share_of_load_pct": 43.977977807971016,
+   "renewable_share_of_load_pct": 44.261566512431514,
    "hydro_capacity_mw": 5346.0,
    "hydro_flh": 1127.4933221099889
   },
@@ -118,7 +118,7 @@
    "run_of_river_share_pct": 59.96500196053823,
    "reservoir_share_pct": 8.12314338977067,
    "pumped_share_pct": 31.91185464969109,
-   "renewable_share_of_load_pct": 46.61366621376812,
+   "renewable_share_of_load_pct": 47.21360998885083,
    "hydro_capacity_mw": 5363.0,
    "hydro_flh": 1029.7373951146744
   },
@@ -148,7 +148,7 @@
    "run_of_river_share_pct": 69.77540208822857,
    "reservoir_share_pct": 9.101746304090524,
    "pumped_share_pct": 21.122851607680882,
-   "renewable_share_of_load_pct": 44.6252490942029,
+   "renewable_share_of_load_pct": 45.18957638805988,
    "hydro_capacity_mw": 5296.0,
    "hydro_flh": 1281.2593797205438
   },
@@ -178,7 +178,7 @@
    "run_of_river_share_pct": 59.567706052647836,
    "reservoir_share_pct": 6.770332893260566,
    "pumped_share_pct": 33.661961054091606,
-   "renewable_share_of_load_pct": 46.99448596014493,
+   "renewable_share_of_load_pct": 47.98542557474471,
    "hydro_capacity_mw": 5410.0,
    "hydro_flh": 936.9748105360445
   },
@@ -208,7 +208,7 @@
    "run_of_river_share_pct": 64.83058177290964,
    "reservoir_share_pct": 7.142156654817845,
    "pumped_share_pct": 28.02726157227251,
-   "renewable_share_of_load_pct": 55.223913043478255,
+   "renewable_share_of_load_pct": 56.05524052236249,
    "hydro_capacity_mw": 5411.0,
    "hydro_flh": 1080.2060802069857
   },
@@ -238,7 +238,7 @@
    "run_of_river_share_pct": 58.42310959065524,
    "reservoir_share_pct": 8.648987983578001,
    "pumped_share_pct": 32.92790242576677,
-   "renewable_share_of_load_pct": 55.76442481884058,
+   "renewable_share_of_load_pct": 56.620339911709294,
    "hydro_capacity_mw": 5415.0,
    "hydro_flh": 1134.8326131117267
   },
@@ -268,7 +268,7 @@
    "run_of_river_share_pct": 59.11916330100646,
    "reservoir_share_pct": 6.683077312841642,
    "pumped_share_pct": 34.1977593861519,
-   "renewable_share_of_load_pct": 61.40135869565218,
+   "renewable_share_of_load_pct": 62.20716529749587,
    "hydro_capacity_mw": 5415.0,
    "hydro_flh": 912.7779224376732
   },
@@ -298,7 +298,7 @@
    "run_of_river_share_pct": 52.66178370931053,
    "reservoir_share_pct": 5.601072221190847,
    "pumped_share_pct": 41.73714406949864,
-   "renewable_share_of_load_pct": 67.75317028985508,
+   "renewable_share_of_load_pct": 68.47340459754533,
    "hydro_capacity_mw": 5320.0,
    "hydro_flh": 739.6527631578948
   }
@@ -1054,7 +1054,7 @@
    "run_of_river_share_pct": 73.20879462279984,
    "reservoir_share_pct": 16.424362480580093,
    "pumped_share_pct": 10.366842896620073,
-   "renewable_share_of_load_pct": 83.01034873188406,
+   "renewable_share_of_load_pct": 80.7579566303843,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1084,7 +1084,7 @@
    "run_of_river_share_pct": 73.12884151870604,
    "reservoir_share_pct": 16.68622450817212,
    "pumped_share_pct": 10.184933973121838,
-   "renewable_share_of_load_pct": 75.04884510869566,
+   "renewable_share_of_load_pct": 73.84908088391956,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1114,7 +1114,7 @@
    "run_of_river_share_pct": 71.96817838713777,
    "reservoir_share_pct": 17.389727339038657,
    "pumped_share_pct": 10.642094273823579,
-   "renewable_share_of_load_pct": 84.09492753623189,
+   "renewable_share_of_load_pct": 81.64800990708626,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1144,7 +1144,7 @@
    "run_of_river_share_pct": 71.74099953170358,
    "reservoir_share_pct": 14.756638632322074,
    "pumped_share_pct": 13.502361835974314,
-   "renewable_share_of_load_pct": 94.46342844202898,
+   "renewable_share_of_load_pct": 91.83801931394741,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1174,7 +1174,7 @@
    "run_of_river_share_pct": 72.7649064751232,
    "reservoir_share_pct": 15.103918232425546,
    "pumped_share_pct": 12.131175292451251,
-   "renewable_share_of_load_pct": 93.83025362318841,
+   "renewable_share_of_load_pct": 91.93856133168707,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1204,7 +1204,7 @@
    "run_of_river_share_pct": 70.60609121558947,
    "reservoir_share_pct": 15.69824242059119,
    "pumped_share_pct": 13.69566636381933,
-   "renewable_share_of_load_pct": 78.04322916666668,
+   "renewable_share_of_load_pct": 76.52813421311373,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1234,7 +1234,7 @@
    "run_of_river_share_pct": 76.59676921274374,
    "reservoir_share_pct": 12.65566191234867,
    "pumped_share_pct": 10.747568874907564,
-   "renewable_share_of_load_pct": 102.0817821557971,
+   "renewable_share_of_load_pct": 99.77413375400626,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1264,7 +1264,7 @@
    "run_of_river_share_pct": 74.80626666743747,
    "reservoir_share_pct": 13.278570159354615,
    "pumped_share_pct": 11.915163173207922,
-   "renewable_share_of_load_pct": 110.97083333333333,
+   "renewable_share_of_load_pct": 109.40272718593218,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1294,7 +1294,7 @@
    "run_of_river_share_pct": 75.24842555716322,
    "reservoir_share_pct": 13.026630720478822,
    "pumped_share_pct": 11.724943722357972,
-   "renewable_share_of_load_pct": 106.51445878623188,
+   "renewable_share_of_load_pct": 105.19264817155309,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -1324,7 +1324,7 @@
    "run_of_river_share_pct": 73.69299315771153,
    "reservoir_share_pct": 12.350913341788239,
    "pumped_share_pct": 13.95609350050026,
-   "renewable_share_of_load_pct": 86.2142776268116,
+   "renewable_share_of_load_pct": 85.66087656500285,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   }
@@ -2080,7 +2080,7 @@
    "run_of_river_share_pct": 40.14888864940109,
    "reservoir_share_pct": 49.72061406092562,
    "pumped_share_pct": 10.130497289673308,
-   "renewable_share_of_load_pct": 65.65978260869565,
+   "renewable_share_of_load_pct": 65.83736928280187,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2110,7 +2110,7 @@
    "run_of_river_share_pct": 48.6169366161717,
    "reservoir_share_pct": 43.76884836442915,
    "pumped_share_pct": 7.6142150193991505,
-   "renewable_share_of_load_pct": 85.56236413043479,
+   "renewable_share_of_load_pct": 85.76958672426272,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2140,7 +2140,7 @@
    "run_of_river_share_pct": 45.248201764162275,
    "reservoir_share_pct": 46.75504005939961,
    "pumped_share_pct": 7.996758176438121,
-   "renewable_share_of_load_pct": 102.70815217391305,
+   "renewable_share_of_load_pct": 102.18081599775678,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2170,7 +2170,7 @@
    "run_of_river_share_pct": 45.46265067832313,
    "reservoir_share_pct": 46.13257468291498,
    "pumped_share_pct": 8.4047746387619,
-   "renewable_share_of_load_pct": 84.87595108695652,
+   "renewable_share_of_load_pct": 85.05383248464155,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2200,7 +2200,7 @@
    "run_of_river_share_pct": 45.68847264523589,
    "reservoir_share_pct": 46.885050132855184,
    "pumped_share_pct": 7.426477221908922,
-   "renewable_share_of_load_pct": 92.45240036231885,
+   "renewable_share_of_load_pct": 92.17184221395415,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2230,7 +2230,7 @@
    "run_of_river_share_pct": 47.606364283097726,
    "reservoir_share_pct": 43.683001484040126,
    "pumped_share_pct": 8.71063423286216,
-   "renewable_share_of_load_pct": 79.15520833333333,
+   "renewable_share_of_load_pct": 79.18422197633555,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2260,7 +2260,7 @@
    "run_of_river_share_pct": 47.66209117700917,
    "reservoir_share_pct": 43.61592876915733,
    "pumped_share_pct": 8.721980053833478,
-   "renewable_share_of_load_pct": 89.0307518115942,
+   "renewable_share_of_load_pct": 89.14593121040501,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2290,7 +2290,7 @@
    "run_of_river_share_pct": 41.25901423681381,
    "reservoir_share_pct": 50.64221167762247,
    "pumped_share_pct": 8.09877408556373,
-   "renewable_share_of_load_pct": 116.86240942028986,
+   "renewable_share_of_load_pct": 114.2112685359977,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2320,7 +2320,7 @@
    "run_of_river_share_pct": 52.26275174010758,
    "reservoir_share_pct": 36.472116572034125,
    "pumped_share_pct": 11.265131687858288,
-   "renewable_share_of_load_pct": 82.15815217391305,
+   "renewable_share_of_load_pct": 82.14567978667702,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   },
@@ -2350,7 +2350,7 @@
    "run_of_river_share_pct": 54.884503086243384,
    "reservoir_share_pct": 33.418639454631254,
    "pumped_share_pct": 11.696857459125356,
-   "renewable_share_of_load_pct": 69.99415760869566,
+   "renewable_share_of_load_pct": 70.6992786645553,
    "hydro_capacity_mw": null,
    "hydro_flh": NaN
   }
