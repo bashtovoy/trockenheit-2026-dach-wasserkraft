@@ -277,7 +277,7 @@
   {
    "country": "DE",
    "year": 2017,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 9483.0,
    "ps_generation_gwh": 2057.836375,
    "ps_pumping_gwh": 1485.909875,
@@ -319,7 +319,7 @@
   {
    "country": "DE",
    "year": 2018,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 9863.0,
    "ps_generation_gwh": 1662.288225,
    "ps_pumping_gwh": 2197.6874500000004,
@@ -361,7 +361,7 @@
   {
    "country": "DE",
    "year": 2019,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 10001.0,
    "ps_generation_gwh": 2040.000175,
    "ps_pumping_gwh": 2466.1471500000002,
@@ -403,7 +403,7 @@
   {
    "country": "DE",
    "year": 2020,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 10001.0,
    "ps_generation_gwh": 2588.30125,
    "ps_pumping_gwh": 2886.8192999999997,
@@ -445,7 +445,7 @@
   {
    "country": "DE",
    "year": 2021,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 10001.0,
    "ps_generation_gwh": 1817.1316000000002,
    "ps_pumping_gwh": 2117.681525,
@@ -487,7 +487,7 @@
   {
    "country": "DE",
    "year": 2022,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 10001.0,
    "ps_generation_gwh": 2572.1836000000003,
    "ps_pumping_gwh": 3494.5929000000006,
@@ -529,7 +529,7 @@
   {
    "country": "DE",
    "year": 2023,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 10001.0,
    "ps_generation_gwh": 2276.128575,
    "ps_pumping_gwh": 2721.274875,
@@ -571,7 +571,7 @@
   {
    "country": "DE",
    "year": 2024,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 9902.0,
    "ps_generation_gwh": 3016.841175,
    "ps_pumping_gwh": 3738.158875,
@@ -613,7 +613,7 @@
   {
    "country": "DE",
    "year": 2025,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 9902.0,
    "ps_generation_gwh": 2568.742425,
    "ps_pumping_gwh": 3427.89515,
@@ -655,7 +655,7 @@
   {
    "country": "DE",
    "year": 2026,
-   "reporting": "gross (separate consumption series)",
+   "reporting": "Erzeugung und Pumpstrom getrennt ausgewiesen",
    "ps_capacity_mw": 9902.0,
    "ps_generation_gwh": 2818.840325,
    "ps_pumping_gwh": 3635.1017,
@@ -1243,7 +1243,7 @@
   {
    "country": "CH",
    "year": 2017,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 2562.0,
    "ps_generation_gwh": 1051.2188999999998,
    "ps_pumping_gwh": 0.0,
@@ -1285,7 +1285,7 @@
   {
    "country": "CH",
    "year": 2018,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 2562.0,
    "ps_generation_gwh": 990.9766,
    "ps_pumping_gwh": 0.0,
@@ -1327,7 +1327,7 @@
   {
    "country": "CH",
    "year": 2019,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 2562.0,
    "ps_generation_gwh": 1248.4502000000002,
    "ps_pumping_gwh": 0.0,
@@ -1369,7 +1369,7 @@
   {
    "country": "CH",
    "year": 2020,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 2562.0,
    "ps_generation_gwh": 1065.2667,
    "ps_pumping_gwh": 0.0,
@@ -1411,7 +1411,7 @@
   {
    "country": "CH",
    "year": 2021,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 2562.0,
    "ps_generation_gwh": 1000.8108,
    "ps_pumping_gwh": 0.0,
@@ -1453,7 +1453,7 @@
   {
    "country": "CH",
    "year": 2022,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 3484.0,
    "ps_generation_gwh": 1014.1158,
    "ps_pumping_gwh": 0.0,
@@ -1495,7 +1495,7 @@
   {
    "country": "CH",
    "year": 2023,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 3493.0,
    "ps_generation_gwh": 1123.2885999999999,
    "ps_pumping_gwh": 0.0,
@@ -1537,7 +1537,7 @@
   {
    "country": "CH",
    "year": 2024,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 3517.0,
    "ps_generation_gwh": 1272.2688000000003,
    "ps_pumping_gwh": 0.0,
@@ -1579,7 +1579,7 @@
   {
    "country": "CH",
    "year": 2025,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 3503.0,
    "ps_generation_gwh": 1274.4883,
    "ps_pumping_gwh": 0.0,
@@ -1621,7 +1621,7 @@
   {
    "country": "CH",
    "year": 2026,
-   "reporting": "gross only (no pumping signal in series)",
+   "reporting": "nur Erzeugung (kein Pumpbetrieb in der Reihe)",
    "ps_capacity_mw": 3503.0,
    "ps_generation_gwh": 1068.7207999999998,
    "ps_pumping_gwh": 0.0,

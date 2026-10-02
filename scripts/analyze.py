@@ -177,14 +177,14 @@ def pumped_storage_table(country: str) -> pd.DataFrame:
             # Germany: separate consumption series, reported as negative MW
             gen = ps.clip(lower=0)
             pump = (-df[pump_col]).clip(lower=0)
-            reporting = "gross (separate consumption series)"
+            reporting = "Erzeugung und Pumpstrom getrennt ausgewiesen"
         else:
             # Switzerland: single series; pumping appears as negative values
             gen = ps.clip(lower=0)
             pump = (-ps.clip(upper=0))
-            reporting = "net (negative values in one series)"
+            reporting = "Nettoreihe (Pumpen als negative Werte)"
             if float(pump.sum(skipna=True)) == 0:
-                reporting = "gross only (no pumping signal in series)"
+                reporting = "nur Erzeugung (kein Pumpbetrieb in der Reihe)"
 
         gen_gwh = gwh(gen, ih)
         pump_gwh = gwh(pump, ih)

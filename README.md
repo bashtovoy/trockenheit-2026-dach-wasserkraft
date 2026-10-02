@@ -1,76 +1,79 @@
-# Hydro & pumped-storage: Switzerland vs Germany, summer 2026
+# Wasserkraft und Pumpspeicher: Schweiz und Deutschland, Sommer 2026
 
-Анализ работы гидрогенерации и гидроаккумулирующих электростанций (Pumpspeicherkraftwerk)
-в **Швейцарии** и **Германии** летом 2026 года (1 июня – 31 августа) в сравнении с 2017–2025.
+Analyse der Wasserkraft und der Pumpspeicherkraftwerke (PSW) in der **Schweiz** und in
+**Deutschland** im Sommer 2026 (1. Juni – 31. August) im Vergleich zu 2017–2025.
 
-Данные: [energy-charts.info API v2](https://api.energy-charts.info/) (Fraunhofer ISE), лицензия **CC BY 4.0**.
+Datenbasis: [energy-charts.info API v2](https://api.energy-charts.info/) (Fraunhofer ISE), Lizenz **CC BY 4.0**.
 
-## Результаты
+## Ergebnisse
 
-Интерактивный отчёт: [`output/report.html`](output/report.html) — 18 графиков (Chart.js) и сводные
-таблицы по всем годам. Все числовые утверждения в разделе «Выводы» генерируются из данных, а не пишутся вручную.
+Interaktiver Bericht: [`output/report.html`](output/report.html) – 18 Diagramme (Chart.js) und
+vollständige Jahrestabellen. Alle Zahlen im Abschnitt „Fazit“ werden aus den Daten generiert und
+können nicht von den Tabellen abweichen.
 
-Ключевые находки:
+Wichtigste Befunde:
 
-* **Германия**: гидрогенерация 6 754 ГВт·ч (−15 % к средней 2017–25); Run-of-River 3 557 ГВт·ч —
-  **минимум за 10 лет**, хуже засухи-2018 на 22 %. Резервуарное −35 %.
-* **Швейцария**: гидрогенерация 9 137 ГВт·ч (−30 %, **худшее лето в десятилетии**); отдача
-  водохранилищ 3 053 ГВт·ч против средней 5 715 (−48 %). Доля гидро в нагрузке упала с 85 % до 53 %
-  при рекордной нагрузке. Чистый экспорт ~2 147 ГВт·ч против ~3 894 в среднем.
-* **ГАЭС**: Германия — объёмы около рекордных (генерация 2 819, закачка 3 635 ГВт·ч), но **сменился режим
-  работы**: ночная закачка 57 % → 3,6 %, дневная (10–16 ч) 26 % → 71 %, вечерняя генерация 52 % → 74 %.
-  976 ГВт·ч закачано при отрицательных ценах. Захватывающий спред 134,6 €/МВт·ч, теоретическая
-  арбитражная ценность летнего цикла ≈ 345 млн €. В Швейцарии тот же сдвиг в вечер (42 % → 58 %).
-* **Цены**: DE-LU 114,0 €/МВт·ч (+49 % к 2017–25), CH 119,6 (+53 %); суточный разброс в DE рекордный
-  с 2022 года — прямой драйвер перестройки режима ГАЭС.
+* **Deutschland**: Wasserkraft 6 754 GWh (−15 % gegenüber dem Mittel 2017–25); Laufwasser 3 557 GWh –
+  **Tiefstwert des Jahrzehnts**, 22 % unter dem Dürrejahr 2018. Speicherwasser −35 %.
+* **Schweiz**: Wasserkraft 9 137 GWh (−30 %, **schlimmster Sommer des Jahrzehnts**); Speicherwasser
+  3 053 GWh gegenüber 5 901 GWh im Mittel (−48 %). Der Wasserkraftanteil an der Last fiel von 85 % auf
+  53 %, bei Rekordverbrauch. Nettoexport nur 2 147 GWh gegenüber 4 175 GWh im Mittel.
+* **Pumpspeicher**: Deutschland – Mengen nahe am Rekord (Erzeugung 2 819, Pumpstrom 3 635 GWh), aber
+  **neues Betriebsregime**: Nacht-Pumpen 57 % → 4 %, Mittagspumpen (10–16 Uhr) 26 % → 71 %,
+  Abend-Erzeugung (17–24 Uhr) 52 % → 74 %. 976 GWh Pumpstrom fielen in Stunden mit negativen Preisen.
+  Capture-Spread 134,6 €/MWh, theoretischer Arbitragewert des Sommerzyklus ≈ 345 Mio. €.
+  In der Schweiz derselbe Abendtrend (42 % → 58 %).
+* **Preise**: DE-LU 114,0 €/MWh (+49 % gegenüber 2017–25), CH 119,6 €/MWh (+53 %); die mittlere
+  tägliche Spread in Deutschland ist der höchste Wert seit der Energiekrise 2022 – der direkte Treiber
+  des geänderten PSW-Regimes.
 
-## Структура
+## Struktur
 
 ```
-scripts/fetch_data.py     загрузка из API (резюмируемый gzip-кэш в data/raw, обработка HTTP 429)
-scripts/fetch_flows.py    дополнительная загрузка трансграничных потоков (/v2/cbpf)
-scripts/analyze.py        метрики → CSV в output/ + summary.json
-scripts/findings.py       автогенерируемый раздел «Выводы» (числа берутся из summary.json)
-scripts/build_report.py   сборка output/report.html
-data/raw/                 кэш сырых ответов API (не в репозитории, восстанавливается скриптом)
-output/                   расчётные таблицы и готовый отчёт
+scripts/fetch_data.py     Abruf aus der API (fortsetzbarer gzip-Cache in data/raw, HTTP-429-Behandlung)
+scripts/fetch_flows.py    ergänzender Abruf der Grenzüberschreitungsflüsse (/v2/cbpf)
+scripts/analyze.py        Kennzahlen → CSV in output/ + summary.json
+scripts/findings.py       automatisch generiertes „Fazit“ (Zahlen aus summary.json)
+scripts/build_report.py   Zusammenstellung von output/report.html
+data/raw/                 Cache der API-Antworten (nicht im Repository, wird vom Skript neu erzeugt)
+output/                  Berechnete Tabellen und fertiger Bericht
 ```
 
-## Запуск
+## Ausführung
 
-Требуется Python 3.10+ и pandas (`pip install pandas certifi`).
+Python 3.10+ und pandas erforderlich (`pip install pandas certifi`).
 
 ```bash
-# 1. скачать данные: 10 лет × (генерация, цены, установленная мощность) × DE/CH
+# 1. Daten laden: 10 Jahre × (Erzeugung, Preise, installierte Leistung) × DE/CH
 python3 scripts/fetch_data.py --years 2017-2026 --sleep 15
 
-# 2. трансграничные потоки (опционально, для блока «Сальдо-перетоки»)
+# 2. Grenzüberschreitende Flüsse (optional, für Abschnitt 4)
 python3 scripts/fetch_flows.py 2017-2026
 
-# 3. расчёт и отчёт
+# 3. Berechnung und Bericht
 python3 scripts/analyze.py
 python3 scripts/build_report.py
 open output/report.html
 ```
 
-**Важно про API:** эндпоинты отдают данные по 15 минут (DE) и по 1 часу (CH) за 3 месяца в одном
-запросе, но сервер агрессивно ограничивает частоту — примерно **1 запрос / 10–15 секунд**
-(HTTP 429 со `retry-after`). Полный прогон ~60 запросов занимает 10–20 минут; кэш в `data/raw/`
-позволяет прерывать и продолжать без повторной загрузки.
+**Wichtig zur API:** die Endpunkte liefern 15-Minuten-Daten (DE) bzw. Stundenwerte (CH) für drei
+Monate in einer Anfrage, drosseln aber aggressiv – etwa **eine Anfrage pro 10–15 Sekunden**
+(HTTP 429 mit `retry-after`). Ein vollständiger Durchlauf (~60 Anfragen) dauert 10–20 Minuten; der
+Cache in `data/raw/` erlaubt Abbruch und Fortsetzung ohne erneuten Download.
 
-## Ограничения данных
+## Datengrenzen
 
-* `hydro_pumped_storage_consumption` (почасовая закачка) публикуется только для Германии; для
-  Швейцарии доступна лишь генерация, поэтому КПД и «циклы» для CH не считаются.
-* Цена DE-LU доступна с 2019 года, SHP-цена CH — с 2017.
-* Закачка DE 2017 года, вероятно, неполная (видимый КПД > 100 %) — в отчёте помечено флагом
-  `pumping_data_suspect`.
-* Установленная мощность для CH известна до 2025 года (для 2026 берётся последнее значение).
-* «Арбитражная ценность» — теоретическая оценка на дневном рынке без учёта потерь, затрат на
-  закачку и правил конкретной станции.
+* `hydro_pumped_storage_consumption` (Pumpstrom stündlich) wird nur für Deutschland publiziert; für die
+  Schweiz ist nur die Erzeugung verfügbar, daher entfallen PSW-Wirkungsgrad und „Zyklen“ für CH.
+* DE-LU-Preise ab 2019 verfügbar, CH-Preise (SHP) ab 2017.
+* Der Pumpstrom 2017 in Deutschland ist offenbar unvollständig (scheinbarer Wirkungsgrad > 100 %) –
+  im Bericht mit `pumping_data_suspect` gekennzeichnet.
+* Installierte PSW-Leistung der Schweiz ist nur bis 2025 publiziert (für 2026 wird der letzte Wert genutzt).
+* Der „Arbitragewert“ ist eine theoretische Day-ahead-Betrachtung ohne Wirkungsgradverluste,
+  Regelenergie und Rahmenverträge konkreter Anlagen.
 
-## Лицензия данных
+## Datenlizenz
 
-Ряды энергии и цен принадлежат их источникам (ENTSO-E, SMARD, Swissgrid, EEX и др.) и опубликованы
-Fraunhofer ISE под CC BY 4.0 через energy-charts.info. При использовании — указание источника
-`energy-charts.info — Fraunhofer ISE`.
+Die Energie- und Preisreihen stammen von ihren jeweiligen Quellen (ENTSO-E, SMARD, Swissgrid, EEX u. a.)
+und werden von Fraunhofer ISE über energy-charts.info unter CC BY 4.0 veröffentlicht. Bei Nutzung:
+Quellenangabe `energy-charts.info — Fraunhofer ISE`.
