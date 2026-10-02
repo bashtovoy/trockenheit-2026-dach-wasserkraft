@@ -1,0 +1,13 @@
+# regenerated API cache (see scripts/fetch_data.py)
+data/raw/*
+!data/raw/.gitkeep
+
+# run logs and ad-hoc screenshots
+*.log
+*.png
+!output/report.html
+
+# python
+__pycache__/
+*.pyc
+.DS_Store
